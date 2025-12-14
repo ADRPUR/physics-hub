@@ -1,0 +1,37 @@
+# IDE / OS artifacts
+.idea/
+*.iml
+.DS_Store
+.vscode/
+
+# Build caches
+.gradle/
+.gradle-cache/
+.mvn/
+
+# Java / Gradle outputs
+build/
+*/build/
+**/build/
+out/
+bin/
+
+# Logs
+*.log
+
+# Local environment / config
+*.env
+.env.*
+
+# Node / frontend artifacts
+fizicamd-frontend/node_modules/
+fizicamd-frontend/dist/
+fizicamd-frontend/.vite/
+
+# Generated files from tooling
+package-lock.json
+pnpm-lock.yaml
+yarn.lock
+
+# Misc
+*.swp

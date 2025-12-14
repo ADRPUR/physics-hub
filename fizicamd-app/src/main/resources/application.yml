@@ -1,0 +1,30 @@
+server:
+  port: 8080
+
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/fizicamd
+    username: fizicamd
+    password: fizicamd
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+    properties:
+      hibernate:
+        format_sql: true
+  flyway:
+    enabled: true
+    default-schema: public
+    schemas:
+      - public
+
+media:
+  storage:
+    local-path: storage/media
+
+security:
+  jwt:
+    # MUST be at least 32 bytes for HS256+ with jjwt Keys helper
+    secret: "CHANGE_ME_CHANGE_ME_CHANGE_ME_CHANGE_ME_1234"
+    issuer: "fizicamd"
