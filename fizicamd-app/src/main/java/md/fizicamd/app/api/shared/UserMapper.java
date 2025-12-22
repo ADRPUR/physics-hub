@@ -24,11 +24,10 @@ public final class UserMapper {
               profile.getFirstName(),
               profile.getLastName(),
               profile.getBirthDate() != null ? DATE_FORMAT.format(profile.getBirthDate()) : null,
+              profile.getGender(),
               profile.getPhone(),
               profile.getSchool(),
               profile.getGradeLevel(),
-              profile.getLocale(),
-              profile.getTimezone(),
               profile.getBio(),
               profile.getAvatarMediaId() != null ? md.fizicamd.app.media.MediaService.buildAssetUrl(profile.getAvatarMediaId()) : null
       );

@@ -61,11 +61,10 @@ public class MeController {
 
     profile.setFirstName(req.firstName());
     profile.setLastName(req.lastName());
+    profile.setGender(req.gender());
     profile.setPhone(req.phone());
     profile.setSchool(req.school());
     profile.setGradeLevel(req.gradeLevel());
-    profile.setLocale(req.locale());
-    profile.setTimezone(req.timezone());
     profile.setBio(req.bio());
     profile.setBirthDate(parseDate(req.birthDate()));
 

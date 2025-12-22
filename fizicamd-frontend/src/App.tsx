@@ -3,6 +3,7 @@ import Router from "./router";
 import { CssBaseline, CircularProgress, Box } from "@mui/material";
 import { useEffect, useState } from "react";
 import { useAuthStore } from "./store/authStore";
+import { recordVisit } from "./api/public";
 
 export default function App() {
   const init = useAuthStore((state) => state.init);
@@ -12,6 +13,14 @@ export default function App() {
     init();
     setReady(true);
   }, [init]);
+
+  useEffect(() => {
+    const key = "fizicamd_visit_tracked";
+    if (sessionStorage.getItem(key)) return;
+    sessionStorage.setItem(key, "1");
+    recordVisit({ path: `${window.location.pathname}${window.location.search}`, referrer: document.referrer || undefined })
+      .catch(() => undefined);
+  }, []);
 
   if (!ready) {
     return (

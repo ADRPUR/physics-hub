@@ -22,6 +22,7 @@ bin/
 # Local environment / config
 *.env
 .env.*
+storage/
 
 # Node / frontend artifacts
 fizicamd-frontend/node_modules/

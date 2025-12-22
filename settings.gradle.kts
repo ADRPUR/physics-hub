@@ -5,8 +5,6 @@ include(
     "shared-kernel",
     "identity",
     "media",
-    "navigation",
-    "content",
     "learning"
 )
 

@@ -6,6 +6,7 @@ import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -24,6 +25,12 @@ public class MediaController {
   @PostMapping("/uploads/avatar")
   public MediaService.UploadResponse uploadAvatar(@RequestParam("file") MultipartFile file, Authentication auth) {
     return mediaService.uploadAvatar(currentUserId(auth), file);
+  }
+
+  @PostMapping("/uploads/resource")
+  @PreAuthorize("hasAnyRole('TEACHER','ADMIN')")
+  public MediaService.UploadResponse uploadResourceAsset(@RequestParam("file") MultipartFile file, Authentication auth) {
+    return mediaService.uploadResourceAsset(currentUserId(auth), file);
   }
 
   @GetMapping("/assets/{assetId}/content")

@@ -15,6 +15,7 @@ import {
   DialogContent,
   DialogActions,
   Slider,
+  MenuItem,
 } from "@mui/material";
 import { useAuthStore } from "../store/authStore";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -36,11 +37,10 @@ export default function ProfilePage() {
     firstName: "",
     lastName: "",
     birthDate: "",
+    gender: "",
     phone: "",
     school: "",
     gradeLevel: "",
-    locale: "",
-    timezone: "",
     bio: "",
   });
   const [loading, setLoading] = useState(false);
@@ -70,11 +70,10 @@ export default function ProfilePage() {
           firstName: details.firstName ?? "",
           lastName: details.lastName ?? "",
           birthDate: details.birthDate ?? "",
+          gender: details.gender ?? "",
           phone: details.phone ?? "",
           school: details.school ?? "",
           gradeLevel: details.gradeLevel ?? "",
-          locale: details.locale ?? "",
-          timezone: details.timezone ?? "",
           bio: details.bio ?? "",
         });
         updateUser(profile.user);
@@ -305,19 +304,18 @@ export default function ProfilePage() {
                 disabled={loading}
               />
               <TextField
-                label={t("profile.labels.locale")}
-                value={form.locale}
-                onChange={handleChange("locale")}
+                select
+                label={t("profile.labels.gender")}
+                value={form.gender ?? ""}
+                onChange={handleChange("gender")}
                 fullWidth
                 disabled={loading}
-              />
-              <TextField
-                label={t("profile.labels.timezone")}
-                value={form.timezone}
-                onChange={handleChange("timezone")}
-                fullWidth
-                disabled={loading}
-              />
+              >
+                <MenuItem value="">{t("profile.gender.unspecified")}</MenuItem>
+                <MenuItem value="FEMALE">{t("profile.gender.female")}</MenuItem>
+                <MenuItem value="MALE">{t("profile.gender.male")}</MenuItem>
+                <MenuItem value="OTHER">{t("profile.gender.other")}</MenuItem>
+              </TextField>
               <Box sx={{ gridColumn: "1 / -1" }}>
                 <TextField
                   label={t("profile.labels.bio")}

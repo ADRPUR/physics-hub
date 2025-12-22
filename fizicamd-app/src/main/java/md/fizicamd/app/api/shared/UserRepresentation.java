@@ -10,11 +10,10 @@ public class UserRepresentation {
           String firstName,
           String lastName,
           String birthDate,
+          String gender,
           String phone,
           String school,
           String gradeLevel,
-          String locale,
-          String timezone,
           String bio,
           String avatarUrl
   ) {}

@@ -1,327 +1,188 @@
-import {
-  Alert,
-  Box,
-  Button,
-  Card,
-  CardContent,
-  Chip,
-  Paper,
-  Stack,
-  TextField,
-  Typography,
-} from "@mui/material";
+import { Alert, Box, Button, Card, CardContent, Pagination, Stack, Typography } from "@mui/material";
 import { useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { useNavigationTree } from "../contexts/navigationContext";
 import { useI18n } from "../i18n";
-import { useAuthStore } from "../store/authStore";
 import NavigationSidebar from "../components/NavigationSidebar";
-import { fetchHomepageContent } from "../api/public";
-import type { HomepageContent } from "../types/public";
-
-const fallbackFeatureKeys = [
-  { titleKey: "home.features.curriculum", descriptionKey: "home.features.curriculumDesc" },
-  { titleKey: "home.features.resources", descriptionKey: "home.features.resourcesDesc" },
-  { titleKey: "home.features.community", descriptionKey: "home.features.communityDesc" },
-];
+import { fetchPublicResourcesPage } from "../api/resources";
+import type { ResourceCard } from "../types/resources";
+import ResourceCardComponent from "../components/resources/ResourceCard";
+import { useNavigate } from "react-router-dom";
+import { useAuthStore } from "../store/authStore";
 
 export default function HomePage() {
-  const { tree } = useNavigationTree();
   const { t } = useI18n();
   const navigate = useNavigate();
-  const token = useAuthStore((state) => state.token);
-  const [search, setSearch] = useState("");
+  const user = useAuthStore((state) => state.user);
+  const [resources, setResources] = useState<ResourceCard[]>([]);
+  const [resourceError, setResourceError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [homeContent, setHomeContent] = useState<HomepageContent | null>(null);
+  const [page, setPage] = useState(1);
+  const [totalResources, setTotalResources] = useState(0);
+  const pageSize = 5;
+
+  const heroStats = useMemo(
+    () => [
+      { label: "Profesori activi", value: "45+" },
+      { label: "Resurse publicate", value: "120+" },
+      { label: "Ani de arhivă", value: "17" },
+    ],
+    []
+  );
+
+  const featureCards = useMemo(
+    () => [
+      { key: "curriculum", accent: "#5B5CFF" },
+      { key: "resources", accent: "#FF7F5C" },
+      { key: "community", accent: "#8B5CF6" },
+    ],
+    []
+  );
 
   useEffect(() => {
-    const load = async () => {
-      setError(null);
+    const loadResources = async () => {
+      setResourceError(null);
+      setLoading(true);
       try {
-        const data = await fetchHomepageContent();
-        setHomeContent({
-          hero: data.hero ?? null,
-          features: data.features ?? [],
-          spotlights: data.spotlights ?? [],
-        });
+        const data = await fetchPublicResourcesPage({ limit: pageSize, page });
+        setResources(data.items);
+        setTotalResources(data.total);
       } catch (err) {
         console.error(err);
-        setError(t("home.loadError"));
+        setResourceError(t("home.loadError"));
       } finally {
         setLoading(false);
       }
     };
-    load();
-  }, [t]);
-
-  const heroTitle = homeContent?.hero?.title ?? t("home.hero.title");
-  const heroSubtitle = homeContent?.hero?.subtitle ?? t("home.hero.subtitle");
-  const heroDescription = homeContent?.hero?.description ?? t("home.hero.description");
-  const heroPrimary = homeContent?.hero?.primaryCta;
-  const heroSecondary = homeContent?.hero?.secondaryCta;
-  const heroImage = homeContent?.hero?.media?.image ?? "/hero-bg.svg";
-
-  const features = useMemo(() => {
-    if (homeContent?.features?.length) {
-      return homeContent.features;
-    }
-    return fallbackFeatureKeys.map((card, idx) => ({
-      id: `fallback-${idx}`,
-      title: t(card.titleKey),
-      subtitle: null,
-      description: t(card.descriptionKey),
-      icon: null,
-      cta: null,
-    }));
-  }, [homeContent?.features, t]);
-
-  const spotlights = useMemo(() => {
-    if (homeContent?.spotlights?.length) {
-      return homeContent.spotlights;
-    }
-    return tree.slice(0, 3).map((node, idx) => ({
-      id: `spotlight-${idx}`,
-      title: node.title,
-      description: node.children.length ? `${node.children.length} ${t("home.sections.resources")}` : node.slug,
-      badge: "Nav",
-      navigationSlug: node.slug,
-      link: `/resources/${node.slug}`,
-    }));
-  }, [homeContent?.spotlights, tree, t]);
-
-  const onSearch = () => {
-    const query = search.trim();
-    if (!query) return;
-    navigate(`/search?q=${encodeURIComponent(query)}`);
-  };
-
-  const handlePrimaryCta = () => {
-    const link = heroPrimary?.link || (token ? "/overview" : "/register");
-    navigate(link);
-  };
-
-  const handleSecondaryCta = () => {
-    if (heroSecondary?.link) {
-      navigate(heroSecondary.link);
-    } else {
-      navigate("/login");
-    }
-  };
+    loadResources();
+  }, [t, page]);
 
   return (
     <Box>
-      <Paper
-        elevation={0}
-        sx={{
-          p: { xs: 3, md: 5 },
-          borderRadius: 3,
-          mb: 4,
-          backgroundImage: `url('${heroImage}')`,
-          backgroundSize: "cover",
-          backgroundRepeat: "no-repeat",
-          backgroundPosition: "center",
-          backgroundColor: "white",
-        }}
-      >
-        <Box
-          display="grid"
-          gridTemplateColumns={{ xs: "1fr", md: "minmax(0, 1fr) minmax(0, 360px)" }}
-          gap={4}
-          alignItems="center"
+      {!user && (
+        <Card
+          sx={{
+            mb: 5,
+            p: { xs: 3, md: 6 },
+            borderRadius: 5,
+            background: "linear-gradient(135deg,#5B5CFF,#8B5CF6)",
+            color: "#fff",
+            boxShadow: "0 30px 80px rgba(14,18,62,0.35)",
+          }}
         >
-          <Box>
-            <Typography variant="h3" fontWeight={700} gutterBottom>
-              {heroTitle}
-            </Typography>
-            <Typography variant="h6" color="text.secondary" gutterBottom>
-              {heroSubtitle}
-            </Typography>
-            <Typography variant="body1" color="text.secondary">
-              {heroDescription}
-            </Typography>
-            <Stack direction={{ xs: "column", sm: "row" }} spacing={2} mt={3}>
-              <Button variant="contained" size="large" onClick={handlePrimaryCta}>
-                {heroPrimary?.label ?? t("home.hero.primaryCta")}
-              </Button>
-              <Button variant="outlined" size="large" onClick={handleSecondaryCta}>
-                {heroSecondary?.label ?? t("home.hero.secondaryCta")}
-              </Button>
+          <Stack direction={{ xs: "column", md: "row" }} spacing={4} alignItems="center">
+            <Box flex={1}>
+              <Typography variant="h3" fontWeight={700} gutterBottom>
+                {t("home.hero.title")}
+              </Typography>
+              <Typography variant="body1" sx={{ opacity: 0.9 }} mb={3}>
+                {t("home.hero.description")}
+              </Typography>
+              <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
+                <Button variant="contained" color="secondary" onClick={() => navigate("/register")}>
+                  {t("home.hero.primaryCta")}
+                </Button>
+                <Button variant="outlined" color="inherit" onClick={() => navigate("/resources")}>
+                  {t("home.hero.secondaryCta")}
+                </Button>
+              </Stack>
+            </Box>
+            <Stack direction={{ xs: "row", md: "column" }} spacing={2} flexWrap="wrap" justifyContent="center">
+              {heroStats.map((stat) => (
+                <Box
+                  key={stat.label}
+                  sx={{
+                    minWidth: 140,
+                    textAlign: "center",
+                    p: 2,
+                    borderRadius: 4,
+                    backgroundColor: "rgba(255,255,255,0.12)",
+                  }}
+                >
+                  <Typography variant="h4" fontWeight={700}>
+                    {stat.value}
+                  </Typography>
+                  <Typography variant="body2" sx={{ opacity: 0.85 }}>
+                    {stat.label}
+                  </Typography>
+                </Box>
+              ))}
             </Stack>
-            <Stack direction={{ xs: "column", sm: "row" }} spacing={2} mt={3}>
-              <TextField
-                placeholder={t("home.search")}
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && onSearch()}
-                fullWidth
-                InputProps={{
-                  sx: {
-                    backgroundColor: "rgba(255,255,255,0.15)",
-                    borderRadius: 2,
-                    color: "white",
-                  },
-                }}
-                InputLabelProps={{
-                  sx: { color: "rgba(255,255,255,0.7)" },
-                }}
-              />
-              <Button variant="contained" color="secondary" onClick={onSearch}>
-                {t("home.searchAction")}
-              </Button>
-            </Stack>
-          </Box>
-          <Box>
-            <Card sx={{ borderRadius: 3 }}>
+          </Stack>
+        </Card>
+      )}
+
+      {!user && (
+        <Stack direction={{ xs: "column", md: "row" }} spacing={2} mb={5}>
+          {featureCards.map((feature) => (
+            <Card
+              key={feature.key}
+              sx={{
+                flex: 1,
+                borderRadius: 4,
+                borderColor: `${feature.accent}22`,
+                background: "rgba(255,255,255,0.95)",
+              }}
+            >
               <CardContent>
-                <Typography variant="subtitle2" color="text.secondary">
-                  {t("home.hero.teaser")}
-                </Typography>
-                <Typography variant="h6" gutterBottom>
-                  Physics Hub
+                <Typography variant="subtitle2" color={feature.accent}>
+                  {t(`home.features.${feature.key}`)}
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
-                  {t("home.hero.description")}
+                  {t(`home.features.${feature.key}Desc`)}
                 </Typography>
-                <Stack direction="row" spacing={1} mt={2} flexWrap="wrap">
-                  <Chip label={t("common.roles.STUDENT")} color="primary" variant="outlined" />
-                  <Chip label={t("common.roles.TEACHER")} color="secondary" variant="outlined" />
-                  <Chip label="STEM" />
-                </Stack>
               </CardContent>
             </Card>
-          </Box>
-        </Box>
-        {error && (
-          <Alert severity="error" sx={{ mt: 3 }}>
-            {error}
-          </Alert>
-        )}
-      </Paper>
+          ))}
+        </Stack>
+      )}
 
       <Box
         display="grid"
-        gap={4}
+        gap={5}
         gridTemplateColumns={{ xs: "1fr", lg: "minmax(0, 320px) minmax(0, 1fr)" }}
         alignItems="flex-start"
       >
-        <Box>
+        <Box sx={{ position: { lg: "sticky" }, top: 24 }}>
           <NavigationSidebar />
         </Box>
         <Box>
-          <Box
-            display="grid"
-            gap={3}
-            gridTemplateColumns={{ xs: "1fr", md: "repeat(3, minmax(0, 1fr))" }}
-          >
-            {features.map((card) => (
-              <Card key={card.id} sx={{ borderRadius: 3 }} elevation={0} variant="outlined">
-                <CardContent>
-                  <Typography variant="h6">{card.title}</Typography>
-                  {card.subtitle && (
-                    <Typography variant="body2" color="text.secondary">
-                      {card.subtitle}
-                    </Typography>
-                  )}
-                  {card.description && (
-                    <Typography variant="body2" color="text.secondary">
-                      {card.description}
-                    </Typography>
-                  )}
-                  {card.cta?.link && (
-                    <Button size="small" sx={{ mt: 2 }} onClick={() => navigate(card.cta!.link!)}>
-                      {card.cta?.label ?? t("home.sections.view")}
-                    </Button>
-                  )}
-                </CardContent>
-              </Card>
+          <Typography variant="h4" fontWeight={700} mb={2}>
+            {t("home.resourcesSection.title")}
+          </Typography>
+          <Typography variant="body1" color="text.secondary" mb={3}>
+            {t("home.resourcesSection.subtitle")}
+          </Typography>
+          {resourceError && (
+            <Alert severity="warning" sx={{ mb: 2 }}>
+              {resourceError}
+            </Alert>
+          )}
+          <Stack spacing={3}>
+            {resources.map((res) => (
+              <ResourceCardComponent key={res.id} resource={res} />
             ))}
-          </Box>
-
-          <Box mt={4}>
-            <Typography variant="h5" fontWeight={700} gutterBottom>
-              {t("home.sections.spotlights")}
+          </Stack>
+          {!resources.length && !resourceError && (
+            <Typography color="text.secondary" mt={2}>
+              {t("resources.empty")}
             </Typography>
-            <Box
-              display="grid"
-              gap={3}
-              gridTemplateColumns={{ xs: "1fr", md: "repeat(2, minmax(0, 1fr))" }}
-            >
-              {spotlights.map((spot) => (
-                <Card key={spot.id} variant="outlined" sx={{ borderRadius: 3, height: "100%" }}>
-                  <CardContent>
-                    {spot.badge && (
-                      <Chip label={spot.badge} size="small" sx={{ mb: 1 }} color="secondary" variant="outlined" />
-                    )}
-                    <Typography variant="h6">{spot.title}</Typography>
-                    {spot.description && (
-                      <Typography variant="body2" color="text.secondary">
-                        {spot.description}
-                      </Typography>
-                    )}
-                    <Button
-                      sx={{ mt: 2 }}
-                      onClick={() => {
-                        if (spot.link) {
-                          if (spot.link.startsWith("http")) {
-                            window.open(spot.link, "_blank");
-                          } else {
-                            navigate(spot.link);
-                          }
-                        } else if (spot.navigationSlug) {
-                          navigate(`/resources/${spot.navigationSlug}`);
-                        }
-                      }}
-                    >
-                      {t("home.sections.view")}
-                    </Button>
-                  </CardContent>
-                </Card>
-              ))}
-            </Box>
-          </Box>
-
-          <Box mt={4}>
-            <Typography variant="h5" fontWeight={700} gutterBottom>
-              {t("home.sections.structure")}
+          )}
+          {loading && (
+            <Typography mt={3} color="text.secondary">
+              {t("search.loading")}
             </Typography>
-            <Box
-              display="grid"
-              gap={3}
-              gridTemplateColumns={{ xs: "1fr", md: "repeat(2, minmax(0, 1fr))" }}
-            >
-              {tree.slice(0, 6).map((node) => (
-                <Card key={node.id} variant="outlined" sx={{ borderRadius: 3, height: "100%" }}>
-                  <CardContent>
-                    <Typography variant="subtitle2" color="text.secondary">
-                      {node.children.length} {t("home.sections.resources")}
-                    </Typography>
-                    <Typography variant="h6" gutterBottom>
-                      {node.title}
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      {node.slug}
-                    </Typography>
-                    <Button sx={{ mt: 2 }} onClick={() => navigate(`/resources/${node.slug}`)}>
-                      {t("home.sections.view")}
-                    </Button>
-                  </CardContent>
-                </Card>
-              ))}
-              {tree.length === 0 && (
-                <Box>
-                  <Typography color="text.secondary">{t("home.noNavigation")}</Typography>
-                </Box>
-              )}
-            </Box>
-          </Box>
+          )}
+          {totalResources > pageSize && !loading && (
+            <Stack alignItems="center" mt={3}>
+              <Pagination
+                count={Math.ceil(totalResources / pageSize)}
+                page={page}
+                onChange={(_, value) => setPage(value)}
+                color="primary"
+              />
+            </Stack>
+          )}
         </Box>
       </Box>
-      {loading && (
-        <Typography mt={3} color="text.secondary">
-          {t("search.loading")}
-        </Typography>
-      )}
     </Box>
   );
 }

@@ -1,6 +1,5 @@
 package md.fizicamd.app.api.publicsite;
 
-import md.fizicamd.app.api.publicsite.HomepageDtos.HomepageResponse;
 import md.fizicamd.app.api.publicsite.HomepageDtos.SearchResponse;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -14,11 +13,6 @@ public class PublicContentController {
 
   public PublicContentController(PublicContentService service) {
     this.service = service;
-  }
-
-  @GetMapping("/homepage")
-  public HomepageResponse homepage() {
-    return service.fetchHomepage();
   }
 
   @GetMapping("/search")

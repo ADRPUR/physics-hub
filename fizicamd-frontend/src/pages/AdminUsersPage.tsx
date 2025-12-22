@@ -198,6 +198,25 @@ export default function AdminUsersPage() {
             autoHeight
             getRowId={(row) => row.id}
             pageSizeOptions={[5, 10, 25, 50]}
+            sx={{
+              background: "transparent",
+              border: "none",
+              "& .MuiDataGrid-columnHeaders": {
+                backgroundColor: "rgba(91,92,255,0.12)",
+                borderBottom: "1px solid rgba(91,92,255,0.15)",
+                color: "text.primary",
+              },
+              "& .MuiDataGrid-cell": {
+                borderColor: "rgba(255,255,255,0.3)",
+              },
+              "& .MuiDataGrid-row": {
+                backgroundColor: "rgba(255,255,255,0.35)",
+              },
+              "& .MuiDataGrid-footerContainer": {
+                backgroundColor: "rgba(91,92,255,0.08)",
+                borderTop: "1px solid rgba(91,92,255,0.15)",
+              },
+            }}
           />
         </CardContent>
       </Card>

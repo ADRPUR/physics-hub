@@ -42,8 +42,6 @@ dependencies {
   implementation(project(":shared-kernel"))
   implementation(project(":identity"))
   implementation(project(":media"))
-  implementation(project(":navigation"))
-  implementation(project(":content"))
   implementation(project(":learning"))
   implementation(project(":fizicamd-core"))
 

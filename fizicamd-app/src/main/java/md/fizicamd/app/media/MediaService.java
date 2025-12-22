@@ -16,6 +16,8 @@ import java.util.UUID;
 
 @Service
 public class MediaService {
+  private static final String USERS_BUCKET = "users";
+  private static final String RESOURCES_BUCKET = "resources";
   private final MediaAssetRepository assets;
   private final UserProfileRepository profiles;
   private final MediaStorageService storage;
@@ -39,7 +41,7 @@ public class MediaService {
             MediaType.AVATAR,
             contentType,
             file.getSize(),
-            "local",
+            USERS_BUCKET,
             assetId.toString(),
             Instant.now()
     );
@@ -47,7 +49,7 @@ public class MediaService {
     assets.save(asset);
 
     try {
-      storage.store(assetId, file);
+      storage.store(descriptor(asset), file);
     } catch (IOException e) {
       throw new RuntimeException("Nu am putut salva fișierul.", e);
     }
@@ -62,11 +64,43 @@ public class MediaService {
     return new UploadResponse(assetId, buildAssetUrl(assetId));
   }
 
+  @Transactional
+  public UploadResponse uploadResourceAsset(UUID userId, MultipartFile file) {
+    if (file == null || file.isEmpty()) {
+      throw new IllegalArgumentException("Fișierul este gol.");
+    }
+    var contentType = file.getContentType() != null ? file.getContentType() : "application/octet-stream";
+    var mediaType = contentType.startsWith("image/") ? MediaType.IMAGE :
+      ("application/pdf".equalsIgnoreCase(contentType) ? MediaType.DOCUMENT : MediaType.OTHER);
+
+    var assetId = UUID.randomUUID();
+    var asset = new MediaAsset(
+      assetId,
+      userId,
+      mediaType,
+      contentType,
+      file.getSize(),
+      RESOURCES_BUCKET,
+      assetId.toString(),
+      Instant.now()
+    );
+    asset.setFilename(file.getOriginalFilename());
+    assets.save(asset);
+
+    try {
+      storage.store(descriptor(asset), file);
+    } catch (IOException e) {
+      throw new RuntimeException("Nu am putut salva fișierul.", e);
+    }
+
+    return new UploadResponse(assetId, buildAssetUrl(assetId));
+  }
+
   @Transactional(readOnly = true)
   public MediaContent loadContent(UUID assetId) {
     var asset = assets.findById(assetId).orElseThrow(() -> new NotFoundException("Media negăsită"));
     try {
-      Resource resource = storage.load(assetId);
+      Resource resource = storage.load(descriptor(asset));
       if (resource == null || !resource.exists()) {
         throw new NotFoundException("Fișierul nu mai există");
       }
@@ -90,8 +124,16 @@ public class MediaService {
     }
     assets.findById(assetId).ifPresent(asset -> {
       assets.delete(asset);
-      storage.delete(assetId);
+      storage.delete(descriptor(asset));
     });
+  }
+
+  private MediaStorageService.MediaAssetDescriptor descriptor(MediaAsset asset) {
+    return new MediaStorageService.MediaAssetDescriptor(
+      asset.getId(),
+      asset.getBucket(),
+      asset.getStorageKey()
+    );
   }
 
   private void removeAsset(UUID assetId) {

@@ -4,12 +4,11 @@ export interface Profile {
   firstName?: string;
   lastName?: string;
   birthDate?: string;
+  gender?: string;
   phone?: string;
   school?: string;
   gradeLevel?: string;
   avatarUrl?: string;
-  locale?: string;
-  timezone?: string;
   bio?: string;
 }
 
@@ -52,11 +51,10 @@ export interface ProfileUpdateRequest {
   firstName?: string;
   lastName?: string;
   birthDate?: string;
+  gender?: string;
   phone?: string;
   school?: string;
   gradeLevel?: string;
-  locale?: string;
-  timezone?: string;
   bio?: string;
 }
 

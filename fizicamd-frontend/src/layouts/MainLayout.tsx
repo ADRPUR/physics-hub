@@ -5,23 +5,23 @@ import {
   Button,
   Container,
   IconButton,
+  Link,
   Menu,
   MenuItem,
   Stack,
-  TextField,
   Toolbar,
   Typography,
 } from "@mui/material";
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useAuthStore } from "../store/authStore";
 import { API_URL } from "../api/http";
 import { useI18n } from "../i18n";
 import LanguageSelector from "../components/LanguageSelector";
-import { NavigationProvider } from "../contexts/navigationContext";
+import { fetchVisitCount } from "../api/public";
 
-const gradientBg =
-  "linear-gradient(120deg, rgba(31,41,55,1) 0%, rgba(79,70,229,1) 50%, rgba(147,51,234,1) 100%)";
+const layoutBackground =
+  "radial-gradient(circle at 10% 20%, rgba(91,92,255,0.15), transparent 55%),radial-gradient(circle at 90% 10%, rgba(255,126,92,0.15), transparent 55%),linear-gradient(180deg, #F8F9FF 0%, #FBF5FF 100%)";
 
 function AvatarMenu() {
   const { user, logout } = useAuthStore();
@@ -35,7 +35,7 @@ function AvatarMenu() {
         <Button color="inherit" onClick={() => navigate("/login")}>
           {t("login.title")}
         </Button>
-        <Button variant="contained" color="secondary" onClick={() => navigate("/register")}>
+        <Button variant="contained" onClick={() => navigate("/register")}>
           {t("register.title")}
         </Button>
       </Stack>
@@ -54,8 +54,10 @@ function AvatarMenu() {
     ...(user.role === "ADMIN"
       ? [
           { label: t("layout.users"), to: "/admin/users" },
-          { label: t("layout.sidebar"), to: "/admin/navigation" },
+          { label: t("layout.resources"), to: "/admin/resources" },
         ]
+      : user.role === "TEACHER"
+      ? [{ label: t("layout.resources"), to: "/admin/resources" }]
       : []),
   ];
 
@@ -104,61 +106,131 @@ export default function MainLayout() {
   const { t } = useI18n();
   const navigate = useNavigate();
   const location = useLocation();
-  const [search, setSearch] = useState("");
+  const currentYear = new Date().getFullYear();
+  const [visitCount, setVisitCount] = useState<number | null>(null);
 
   const isAuthPage = ["/login", "/register"].includes(location.pathname);
+  const { user } = useAuthStore();
 
-  const onSearch = () => {
-    const query = search.trim();
-    if (!query) return;
-    navigate(`/search?q=${encodeURIComponent(query)}`);
-  };
+  const quickLinks = [
+    { label: t("layout.home"), path: "/" },
+    { label: t("resources.listTitle"), path: "/resources" },
+    { label: t("home.searchAction"), path: "/search" },
+    ...(user && (user.role === "TEACHER" || user.role === "ADMIN")
+      ? [{ label: t("layout.studio"), path: "/teacher/studio" }]
+      : []),
+  ];
+
+  useEffect(() => {
+    fetchVisitCount()
+      .then((data) => setVisitCount(data.total))
+      .catch(() => undefined);
+  }, []);
 
   return (
-    <NavigationProvider>
-      <Box minHeight="100vh" display="flex" flexDirection="column">
-        <AppBar position="static" sx={{ background: gradientBg }}>
-          <Toolbar sx={{ justifyContent: "space-between", alignItems: "center" }}>
+    <Box minHeight="100vh" display="flex" flexDirection="column" sx={{ background: layoutBackground }}>
+      <AppBar
+        position="sticky"
+        color="transparent"
+        elevation={0}
+        sx={{
+          background: "transparent",
+          backdropFilter: "blur(12px)",
+          borderBottom: "1px solid rgba(15,23,42,0.06)",
+        }}
+      >
+        <Container maxWidth="lg">
+          <Toolbar disableGutters sx={{ py: 2, justifyContent: "space-between" }}>
             <Stack direction="row" spacing={2} alignItems="center">
-              <Typography variant="h5" fontWeight={700} color="inherit" sx={{ cursor: "pointer" }} onClick={() => navigate("/")}>
-                Physics Hub
-              </Typography>
-              <Typography variant="body2" color="rgba(255,255,255,0.7)">
-                {t("common.platformTitle")}
-              </Typography>
+              <Box
+                onClick={() => navigate("/")}
+                sx={{
+                  cursor: "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 1.5,
+                }}
+              >
+                <Box
+                  component="img"
+                  src="/physics_hub_atom.svg"
+                  alt="Physics Hub"
+                  sx={{ width: 42, height: 42, display: "block" }}
+                />
+                <Box>
+                  <Typography variant="h6" fontWeight={700}>
+                    Physics Hub
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary">
+                    {t("common.platformTitle")}
+                  </Typography>
+                </Box>
+              </Box>
+              {!isAuthPage && (
+                <Stack direction={{ xs: "column", md: "row" }} spacing={1} sx={{ ml: { md: 4 } }}>
+                  {quickLinks.map((link) => (
+                    <Button
+                      key={link.path}
+                      variant="text"
+                      color="inherit"
+                      onClick={() => navigate(link.path)}
+                      sx={{ color: "text.secondary" }}
+                    >
+                      {link.label}
+                    </Button>
+                  ))}
+                </Stack>
+              )}
             </Stack>
             <Stack direction="row" spacing={2} alignItems="center">
               <LanguageSelector />
               <AvatarMenu />
             </Stack>
           </Toolbar>
-          {!isAuthPage && (
-            <Container sx={{ py: 3 }}>
-              <Stack direction={{ xs: "column", md: "row" }} spacing={2}>
-                <TextField
-                  label={t("home.search")}
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") onSearch();
-                  }}
-                  fullWidth
-                  InputProps={{ sx: { backgroundColor: "rgba(255,255,255,0.1)", color: "white" } }}
-                  InputLabelProps={{ sx: { color: "rgba(255,255,255,0.7)" } }}
-                />
-                <Button variant="contained" color="secondary" onClick={onSearch}>
-                  {t("home.searchAction")}
-                </Button>
-              </Stack>
-            </Container>
-          )}
-        </AppBar>
-        <Box component="main" flex={1} py={isAuthPage ? 4 : 6} bgcolor="#f5f6fb">
-          <Container maxWidth="lg">
-            <Outlet />
-          </Container>
-        </Box>
+        </Container>
+      </AppBar>
+
+      <Box component="main" flex={1} py={isAuthPage ? 4 : 6}>
+        <Container maxWidth="lg">
+          <Outlet />
+        </Container>
       </Box>
-    </NavigationProvider>
+
+      <Box
+        component="footer"
+        sx={{
+          borderTop: "1px solid rgba(15,23,42,0.08)",
+          py: 3,
+          background: "rgba(255,255,255,0.65)",
+          backdropFilter: "blur(10px)",
+        }}
+      >
+        <Container maxWidth="lg">
+          <Stack
+            direction={{ xs: "column", md: "row" }}
+            spacing={1}
+            alignItems={{ xs: "flex-start", md: "center" }}
+            justifyContent="space-between"
+          >
+            <Typography variant="body2" color="text.secondary">
+              Physics Hub • {currentYear} • {t("footer.visitors")}{" "}
+              {visitCount !== null ? visitCount.toLocaleString() : "—"}
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              Dedicat tuturor pasionatilor de fizica, creat cu suflet de{" "}
+              <Link
+                href="https://www.linkedin.com/in/adrian-purice-18047584"
+                target="_blank"
+                rel="noreferrer"
+                underline="hover"
+              >
+                Adrian Purice
+              </Link>
+              .
+            </Typography>
+          </Stack>
+        </Container>
+      </Box>
+    </Box>
   );
 }

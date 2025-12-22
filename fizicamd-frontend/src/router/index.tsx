@@ -12,8 +12,10 @@ const RegisterPage = lazy(() => import("../pages/RegisterPage"));
 const OverviewPage = lazy(() => import("../pages/OverviewPage"));
 const ProfilePage = lazy(() => import("../pages/ProfilePage"));
 const AdminUsersPage = lazy(() => import("../pages/AdminUsersPage"));
-const AdminNavigationPage = lazy(() => import("../pages/AdminNavigationPage"));
+const AdminResourcesPage = lazy(() => import("../pages/AdminResourcesPage"));
 const TeacherStudioPage = lazy(() => import("../pages/TeacherStudioPage"));
+const ResourcesPage = lazy(() => import("../pages/ResourcesPage"));
+const ResourceDetailPage = lazy(() => import("../pages/ResourceDetailPage"));
 
 function Loader() {
   return (
@@ -50,6 +52,8 @@ export default function Router() {
         <Route element={<MainLayout />}>
           <Route path="/" element={<HomePage />} />
           <Route path="/search" element={<SearchPage />} />
+          <Route path="/resources" element={<ResourcesPage />} />
+          <Route path="/resources/:slug" element={<ResourceDetailPage />} />
 
           <Route element={<GuestRoute />}>
             <Route path="/login" element={<LoginPage />} />
@@ -62,11 +66,11 @@ export default function Router() {
 
             <Route element={<RoleRoute allowed={["ADMIN"]} />}>
               <Route path="/admin/users" element={<AdminUsersPage />} />
-              <Route path="/admin/navigation" element={<AdminNavigationPage />} />
             </Route>
 
             <Route element={<RoleRoute allowed={["TEACHER", "ADMIN"]} />}>
               <Route path="/teacher/studio" element={<TeacherStudioPage />} />
+              <Route path="/admin/resources" element={<AdminResourcesPage />} />
             </Route>
           </Route>
 

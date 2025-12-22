@@ -35,12 +35,6 @@ public class UserProfile {
   @Column(name = "grade_level")
   private String gradeLevel;
 
-  @Column(name = "locale")
-  private String locale;
-
-  @Column(name = "timezone")
-  private String timezone;
-
   @Column(name = "bio")
   private String bio;
 
@@ -77,8 +71,6 @@ public class UserProfile {
   public String getPhone() { return phone; }
   public String getSchool() { return school; }
   public String getGradeLevel() { return gradeLevel; }
-  public String getLocale() { return locale; }
-  public String getTimezone() { return timezone; }
   public String getBio() { return bio; }
   public UUID getAvatarMediaId() { return avatarMediaId; }
   public String getContactJson() { return contactJson; }
@@ -93,8 +85,6 @@ public class UserProfile {
   public void setPhone(String phone) { this.phone = phone; }
   public void setSchool(String school) { this.school = school; }
   public void setGradeLevel(String gradeLevel) { this.gradeLevel = gradeLevel; }
-  public void setLocale(String locale) { this.locale = locale; }
-  public void setTimezone(String timezone) { this.timezone = timezone; }
   public void setBio(String bio) { this.bio = bio; }
   public void setAvatarMediaId(UUID avatarMediaId) { this.avatarMediaId = avatarMediaId; }
   public void setContactJson(String contactJson) { this.contactJson = contactJson; }
