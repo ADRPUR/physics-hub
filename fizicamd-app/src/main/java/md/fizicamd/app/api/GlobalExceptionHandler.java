@@ -1,5 +1,6 @@
 package md.fizicamd.app.api;
 
+import md.fizicamd.app.api.auth.AuthException;
 import md.fizicamd.shared.NotFoundException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,6 +23,12 @@ public class GlobalExceptionHandler {
   public ResponseEntity<ApiError> badRequest(IllegalArgumentException ex, HttpServletRequest request) {
     log.info("Bad request: {} {} -> {}", request.getMethod(), request.getRequestURI(), ex.getMessage());
     return ResponseEntity.badRequest().body(new ApiError(ex.getMessage()));
+  }
+
+  @ExceptionHandler(AuthException.class)
+  public ResponseEntity<ApiError> authError(AuthException ex, HttpServletRequest request) {
+    log.info("Auth failure: {} {} -> {}", request.getMethod(), request.getRequestURI(), ex.getMessage());
+    return ResponseEntity.status(ex.getStatus()).body(new ApiError(ex.getMessage()));
   }
 
   @ExceptionHandler(Exception.class)

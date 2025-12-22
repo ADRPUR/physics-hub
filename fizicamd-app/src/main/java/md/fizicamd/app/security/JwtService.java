@@ -23,6 +23,7 @@ public class JwtService {
     return Jwts.builder()
       .issuer(issuer)
       .subject(userId.toString())
+      .claim("typ", "access")
       .claim("email", email)
       .claim("roles", roles)
       .issuedAt(Date.from(now))
@@ -44,6 +45,11 @@ public class JwtService {
   }
 
   public io.jsonwebtoken.Claims parse(String jwt) {
-    return Jwts.parser().verifyWith(key).build().parseSignedClaims(jwt).getPayload();
+    return Jwts.parser()
+      .verifyWith(key)
+      .requireIssuer(issuer)
+      .build()
+      .parseSignedClaims(jwt)
+      .getPayload();
   }
 }

@@ -22,6 +22,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -79,6 +80,7 @@ public class AdminUsersController {
   }
 
   @PostMapping
+  @Transactional
   public AdminUserResponse create(@RequestBody @Validated AdminUserCreateRequest req) {
     var user = identityService.createUser(req.email(), req.password());
     applyStatus(user, req.status());
@@ -92,6 +94,7 @@ public class AdminUsersController {
   }
 
   @PutMapping("/{id}")
+  @Transactional
   public AdminUserResponse update(
           @PathVariable UUID id,
           @RequestBody @Validated AdminUserUpdateRequest req
@@ -110,13 +113,15 @@ public class AdminUsersController {
   }
 
   @DeleteMapping("/{id}")
+  @Transactional
   public void delete(@PathVariable UUID id) {
-    profileRepository.findById(id).ifPresent(profile -> {
-      if (profile.getAvatarMediaId() != null) {
-        mediaService.deleteAsset(profile.getAvatarMediaId());
-      }
-    });
+    var avatarMediaId = profileRepository.findById(id)
+            .map(UserProfile::getAvatarMediaId)
+            .orElse(null);
     identityService.deleteUser(id);
+    if (avatarMediaId != null) {
+      mediaService.deleteAsset(avatarMediaId);
+    }
   }
 
   @PostMapping("/{userId}/roles")

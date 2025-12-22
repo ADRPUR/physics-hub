@@ -61,9 +61,12 @@ public class AuthController {
 
   @PostMapping("/login")
   public TokenResponse login(@RequestBody @Validated LoginRequest req) {
-    var user = userRepository.findWithRolesByEmail(req.email()).orElseThrow(() -> new IllegalArgumentException("Invalid credentials"));
-    if (user.getStatus() != UserStatus.ACTIVE) throw new IllegalArgumentException("User is not active");
-    if (!passwordHasher.matches(req.password(), user.getPasswordHash())) throw new IllegalArgumentException("Invalid credentials");
+    var user = userRepository.findWithRolesByEmail(req.email())
+      .orElseThrow(AuthException::invalidCredentials);
+    if (user.getStatus() != UserStatus.ACTIVE) throw AuthException.inactiveUser();
+    if (!passwordHasher.matches(req.password(), user.getPasswordHash())) {
+      throw AuthException.invalidCredentials();
+    }
 
     // MVP roles: empty list (later load from DB + join roles)
     var profile = profileRepository.findById(user.getId()).orElse(null);

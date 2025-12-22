@@ -1,5 +1,6 @@
 package md.fizicamd.app.security;
 
+import io.jsonwebtoken.JwtException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -35,6 +36,14 @@ public class JwtAuthFilter extends OncePerRequestFilter {
       var token = auth.substring(7);
       try {
         var claims = jwtService.parse(token);
+        var tokenType = claims.get("typ", String.class);
+        if (!"access".equals(tokenType)) {
+          log.debug("Rejecting JWT with invalid type for {} {}", request.getMethod(), request.getRequestURI());
+          response.setHeader("WWW-Authenticate", "Bearer");
+          response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+          return;
+        }
+
         var userId = claims.getSubject();
         @SuppressWarnings("unchecked")
         var roles = (List<String>) claims.get("roles", List.class);
@@ -47,9 +56,12 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         authentication.setDetails(userId);
         SecurityContextHolder.getContext().setAuthentication(authentication);
         log.debug("Authenticated {} {} as {} (roles={})", request.getMethod(), request.getRequestURI(), userId, roles);
-      } catch (Exception ex) {
+      } catch (JwtException | IllegalArgumentException ex) {
+        SecurityContextHolder.clearContext();
         log.debug("JWT parsing failed for {} {}", request.getMethod(), request.getRequestURI(), ex);
-        // invalid token -> let request continue as unauthenticated
+        response.setHeader("WWW-Authenticate", "Bearer");
+        response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+        return;
       }
     }
 
