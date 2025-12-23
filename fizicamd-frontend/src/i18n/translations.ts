@@ -67,6 +67,7 @@ export const translations: Record<Language, NestedTranslations> = {
       submit: "Autentifică-te",
       registerPrompt: "Nu ai cont?",
       registerLink: "Creează unul",
+      success: "Autentificare reușită.",
     },
     register: {
       title: "Creează cont",
@@ -143,6 +144,21 @@ export const translations: Record<Language, NestedTranslations> = {
       configureMenuDesc: "Gestionează structura site-ului și vizibilitatea.",
       viewGroups: "Accesează grupurile tale",
       viewGroupsDesc: "Vezi lecții sau evenimente pentru clasa ta.",
+      metrics: {
+        title: "Panou performanță server",
+        live: "Live",
+        paused: "Pauză",
+        jvmMemory: "Memorie JVM",
+        systemRam: "RAM sistem",
+        cpuUsage: "Utilizare CPU",
+        diskUsage: "Stocare",
+        load: "Load",
+        process: "Proces",
+        historyHeap: "Istoric memorie JVM",
+        historyRam: "Istoric RAM",
+        historyCpu: "Istoric CPU",
+        historyDisk: "Istoric stocare",
+      },
     },
     profile: {
       title: "Profilul meu",
@@ -191,6 +207,7 @@ export const translations: Record<Language, NestedTranslations> = {
         user: "Utilizator",
         role: "Rol principal",
         status: "Statut",
+        online: "Online",
         school: "Școală",
         grade: "Clasă",
       },
@@ -204,6 +221,14 @@ export const translations: Record<Language, NestedTranslations> = {
         status: "Statut",
       },
       deleteConfirm: "Ești sigur că vrei să ștergi utilizatorul?",
+      saveSuccess: "Utilizator salvat cu succes.",
+      saveError: "Nu am putut salva utilizatorul.",
+      deleteSuccess: "Utilizator șters.",
+      deleteError: "Nu am putut șterge utilizatorul.",
+      onlineStatus: {
+        online: "Online",
+        offline: "Offline",
+      },
     },
     adminResources: {
       title: "Administrare resurse",
@@ -265,6 +290,10 @@ export const translations: Record<Language, NestedTranslations> = {
       updateResource: "Actualizează resursa",
       editingResource: "Editezi o resursă existentă.",
       deleteResourceConfirm: "Sigur vrei să ștergi această resursă?",
+      resourceSaveSuccessDraft: "Resursă salvată ca draft.",
+      resourceSaveSuccessPublished: "Resursă publicată.",
+      resourceSaveSuccessUpdated: "Resursă actualizată.",
+      resourceSaveError: "Nu am putut salva resursa.",
       statusLabels: {
         draft: "Draft",
         published: "Publicată",
@@ -277,6 +306,7 @@ export const translations: Record<Language, NestedTranslations> = {
         deleteConfirm: "Sigur vrei să ștergi această categorie?",
         deleteBlocked: "Nu poți șterge categoria deoarece există resurse asociate.",
         saveError: "Nu am putut salva modificările.",
+        saveSuccess: "Modificările au fost salvate.",
         saveOrder: "Salvează ordinea",
         fields: {
           label: "Nume categorie",
@@ -310,6 +340,8 @@ export const translations: Record<Language, NestedTranslations> = {
       server: "Server indisponibil",
       unknown: "Eroare necunoscută",
       registrationFailed: "Înregistrarea a eșuat",
+      sessionExpired: "Sesiunea ta a expirat. Te rugăm să te autentifici din nou.",
+      invalidCredentials: "Email sau parolă greșite.",
     },
     search: {
       title: "Caută în Physics Hub",
@@ -322,6 +354,7 @@ export const translations: Record<Language, NestedTranslations> = {
     },
     footer: {
       visitors: "Vizitatori:",
+      dedication: "Dedicat tuturor pasionatilor de fizica, creat cu suflet de",
     },
   },
   en: {
@@ -386,6 +419,7 @@ export const translations: Record<Language, NestedTranslations> = {
       submit: "Sign in",
       registerPrompt: "Don't have an account?",
       registerLink: "Create one",
+      success: "Signed in successfully.",
     },
     register: {
       title: "Create account",
@@ -462,6 +496,21 @@ export const translations: Record<Language, NestedTranslations> = {
       configureMenuDesc: "Manage site structure and visibility.",
       viewGroups: "Access your groups",
       viewGroupsDesc: "Browse classes or events for your group.",
+      metrics: {
+        title: "Server performance",
+        live: "Live",
+        paused: "Paused",
+        jvmMemory: "JVM memory",
+        systemRam: "System RAM",
+        cpuUsage: "CPU usage",
+        diskUsage: "Storage",
+        load: "Load",
+        process: "Process",
+        historyHeap: "JVM memory history",
+        historyRam: "RAM history",
+        historyCpu: "CPU history",
+        historyDisk: "Storage history",
+      },
     },
     profile: {
       title: "My profile",
@@ -510,6 +559,7 @@ export const translations: Record<Language, NestedTranslations> = {
         user: "User",
         role: "Primary role",
         status: "Status",
+        online: "Online",
         school: "School",
         grade: "Class",
       },
@@ -523,6 +573,14 @@ export const translations: Record<Language, NestedTranslations> = {
         status: "Status",
       },
       deleteConfirm: "Are you sure you want to remove this user?",
+      saveSuccess: "User saved successfully.",
+      saveError: "Could not save the user.",
+      deleteSuccess: "User deleted.",
+      deleteError: "Could not delete the user.",
+      onlineStatus: {
+        online: "Online",
+        offline: "Offline",
+      },
     },
     adminResources: {
       title: "Resource management",
@@ -600,6 +658,10 @@ export const translations: Record<Language, NestedTranslations> = {
       updateResource: "Update resource",
       editingResource: "You are editing an existing resource.",
       deleteResourceConfirm: "Are you sure you want to delete this resource?",
+      resourceSaveSuccessDraft: "Resource saved as draft.",
+      resourceSaveSuccessPublished: "Resource published.",
+      resourceSaveSuccessUpdated: "Resource updated.",
+      resourceSaveError: "Could not save the resource.",
       statusLabels: {
         draft: "Draft",
         published: "Published",
@@ -612,6 +674,7 @@ export const translations: Record<Language, NestedTranslations> = {
         deleteConfirm: "Are you sure you want to delete this category?",
         deleteBlocked: "You cannot delete this category because resources reference it.",
         saveError: "Changes could not be saved.",
+        saveSuccess: "Changes saved.",
         saveOrder: "Save order",
         fields: {
           label: "Category name",
@@ -629,6 +692,8 @@ export const translations: Record<Language, NestedTranslations> = {
       server: "Server unavailable",
       unknown: "Unknown error",
       registrationFailed: "Registration failed",
+      sessionExpired: "Your session has expired. Please sign in again.",
+      invalidCredentials: "Invalid email or password.",
     },
     search: {
       title: "Search Physics Hub",
@@ -641,6 +706,7 @@ export const translations: Record<Language, NestedTranslations> = {
     },
     footer: {
       visitors: "Visitors:",
+      dedication: "Dedicated to all physics enthusiasts, created with heart by",
     },
   },
 };

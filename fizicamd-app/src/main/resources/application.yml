@@ -23,6 +23,9 @@ media:
   storage:
     local-path: storage/media
 
+metrics:
+  disk-path: ${media.storage.local-path}
+
 security:
   jwt:
     # MUST be at least 32 bytes for HS256+ with jjwt Keys helper

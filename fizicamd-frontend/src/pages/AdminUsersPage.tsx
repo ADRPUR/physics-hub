@@ -22,6 +22,7 @@ import UserFormDialog from "../components/UserFormDialog";
 import { useAuthStore } from "../store/authStore";
 import { useI18n } from "../i18n";
 import PageLayout from "../components/PageLayout";
+import { notify } from "../utils/notifications";
 
 export default function AdminUsersPage() {
   const { token } = useAuthStore();
@@ -65,6 +66,23 @@ export default function AdminUsersPage() {
             color={params.value === "ACTIVE" ? "success" : params.value === "PENDING" ? "warning" : "default"}
           />
         ),
+      },
+      {
+        field: "online",
+        headerName: t("adminUsers.columns.online"),
+        width: 110,
+        valueGetter: (_, row) => row.lastSeenAt ?? null,
+        renderCell: (params) => {
+          const lastSeen = params.value ? new Date(params.value as string) : null;
+          const isOnline = lastSeen ? Date.now() - lastSeen.getTime() <= 5 * 60 * 1000 : false;
+          return (
+            <Chip
+              size="small"
+              color={isOnline ? "success" : "default"}
+              label={isOnline ? t("adminUsers.onlineStatus.online") : t("adminUsers.onlineStatus.offline")}
+            />
+          );
+        },
       },
       { field: "school", headerName: t("adminUsers.columns.school"), flex: 1 },
       { field: "gradeLevel", headerName: t("adminUsers.columns.grade"), width: 120 },
@@ -131,21 +149,33 @@ export default function AdminUsersPage() {
 
   const handleSubmit = async (payload: UserUpsertPayload) => {
     if (!token) return;
-    if (dialogMode === "create") {
-      await createUser(token, payload);
-    } else if (selected) {
-      await updateUser(token, selected.id, payload);
+    try {
+      if (dialogMode === "create") {
+        await createUser(token, payload);
+      } else if (selected) {
+        await updateUser(token, selected.id, payload);
+      }
+      notify({ message: t("adminUsers.saveSuccess"), severity: "success" });
+      setDialogOpen(false);
+      setSelected(null);
+      fetchData();
+    } catch (err) {
+      console.error(err);
+      notify({ message: t("adminUsers.saveError"), severity: "error" });
     }
-    setDialogOpen(false);
-    setSelected(null);
-    fetchData();
   };
 
   const handleDelete = async () => {
     if (!token || !deleteTarget) return;
-    await deleteUser(token, deleteTarget.id);
-    setDeleteTarget(null);
-    fetchData(true);
+    try {
+      await deleteUser(token, deleteTarget.id);
+      notify({ message: t("adminUsers.deleteSuccess"), severity: "success" });
+      setDeleteTarget(null);
+      fetchData(true);
+    } catch (err) {
+      console.error(err);
+      notify({ message: t("adminUsers.deleteError"), severity: "error" });
+    }
   };
 
   return (

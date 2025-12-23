@@ -32,6 +32,10 @@ export default function AdminResourcesPage() {
   const [filter, setFilter] = useState("");
   const [deleteTarget, setDeleteTarget] = useState<ResourceCard | null>(null);
   const locale = language === "ro" ? "ro-RO" : "en-US";
+  const formatDate = useMemo(
+    () => new Intl.DateTimeFormat(locale, { dateStyle: "medium", timeStyle: "short" }),
+    [locale]
+  );
 
   const loadResources = useCallback(async () => {
     if (!token) return;
@@ -59,7 +63,7 @@ export default function AdminResourcesPage() {
 
   const handleEdit = useCallback(
     (resourceId: string) => {
-      navigate(`/teacher/studio?resource=${resourceId}`);
+      navigate(`/admin/resources/editor?resource=${resourceId}`);
     },
     [navigate]
   );
@@ -104,6 +108,14 @@ export default function AdminResourcesPage() {
         field: "authorName",
         headerName: t("adminResources.columns.author"),
         flex: 0.7,
+      },
+      {
+        field: "publishedAt",
+        headerName: t("adminResources.columns.publishedAt"),
+        flex: 0.8,
+        valueGetter: (_, row) => row.publishedAt ?? null,
+        renderCell: (params) =>
+          params.value ? formatDate.format(new Date(params.value as string)) : "—",
       },
       {
         field: "actions",
@@ -158,7 +170,7 @@ export default function AdminResourcesPage() {
                 <Button variant="outlined" onClick={loadResources}>
                   {t("adminResources.refresh")}
                 </Button>
-                <Button variant="contained" onClick={() => navigate("/teacher/studio")}>
+                <Button variant="contained" onClick={() => navigate("/admin/resources/editor")}>
                   {t("adminResources.addResource")}
                 </Button>
               </Stack>

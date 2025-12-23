@@ -9,7 +9,6 @@ import {
   Stack,
   TextField,
   Typography,
-  Alert,
   Dialog,
   DialogTitle,
   DialogContent,
@@ -29,6 +28,7 @@ import { getCroppedImage } from "../utils/cropImage";
 import "react-easy-crop/react-easy-crop.css";
 import { useI18n } from "../i18n";
 import PageLayout from "../components/PageLayout";
+import { notify } from "../utils/notifications";
 
 export default function ProfilePage() {
   const { user, token, updateUser, logout } = useAuthStore();
@@ -45,8 +45,6 @@ export default function ProfilePage() {
   });
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
   const [cropDialogOpen, setCropDialogOpen] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [imageSrc, setImageSrc] = useState<string | null>(null);
@@ -79,7 +77,9 @@ export default function ProfilePage() {
         updateUser(profile.user);
       } catch (err) {
         console.error(err);
-        if (active) setError(t("profile.loadError"));
+        if (active) {
+          notify({ message: t("profile.loadError"), severity: "error" });
+        }
       } finally {
         if (active) setLoading(false);
       }
@@ -98,8 +98,6 @@ export default function ProfilePage() {
   const handleSave = async () => {
     if (!token) return;
     setSaving(true);
-    setError(null);
-    setSuccess(null);
     try {
       const payload: ProfileUpdateRequest = {
         ...form,
@@ -107,10 +105,10 @@ export default function ProfilePage() {
       };
       const { user: updated } = await updateProfile(token, payload);
       updateUser(updated);
-      setSuccess(t("profile.saveSuccess"));
+      notify({ message: t("profile.saveSuccess"), severity: "success" });
     } catch (err) {
       console.error(err);
-      setError(t("profile.saveError"));
+      notify({ message: t("profile.saveError"), severity: "error" });
     } finally {
       setSaving(false);
     }
@@ -148,18 +146,17 @@ export default function ProfilePage() {
   const handleCropSave = async () => {
     if (!token || !selectedFile || !imageSrc || !croppedAreaPixels) return;
     setSaving(true);
-    setError(null);
     try {
       const croppedBlob = await getCroppedImage(imageSrc, croppedAreaPixels, selectedFile.type);
       const croppedFile = new File([croppedBlob], selectedFile.name, { type: selectedFile.type });
       await uploadAvatar(token, croppedFile);
       const profile = await fetchProfile(token);
       updateUser(profile.user);
-      setSuccess(t("profile.avatarUpdated"));
+      notify({ message: t("profile.avatarUpdated"), severity: "success" });
       resetCropState();
     } catch (err) {
       console.error(err);
-      setError(t("profile.avatarError"));
+      notify({ message: t("profile.avatarError"), severity: "error" });
     } finally {
       setSaving(false);
     }
@@ -173,7 +170,7 @@ export default function ProfilePage() {
       logout();
     } catch (err) {
       console.error(err);
-      setError(t("profile.deleteError"));
+      notify({ message: t("profile.deleteError"), severity: "error" });
     }
   };
 
@@ -193,9 +190,6 @@ export default function ProfilePage() {
       <Typography variant="h4" fontWeight={700}>
         {t("profile.title")}
       </Typography>
-
-      {error && <Alert severity="error">{error}</Alert>}
-      {success && <Alert severity="success">{success}</Alert>}
 
       <Box
         display="grid"

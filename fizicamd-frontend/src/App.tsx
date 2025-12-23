@@ -4,9 +4,12 @@ import { CssBaseline, CircularProgress, Box } from "@mui/material";
 import { useEffect, useState } from "react";
 import { useAuthStore } from "./store/authStore";
 import { recordVisit } from "./api/public";
+import { pingMe } from "./api/user";
+import ToastProvider from "./components/ToastProvider";
 
 export default function App() {
   const init = useAuthStore((state) => state.init);
+  const token = useAuthStore((state) => state.token);
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
@@ -22,6 +25,21 @@ export default function App() {
       .catch(() => undefined);
   }, []);
 
+  useEffect(() => {
+    if (!token) return;
+    let active = true;
+    const sendPing = () => {
+      if (!active) return;
+      pingMe(token).catch(() => undefined);
+    };
+    sendPing();
+    const interval = window.setInterval(sendPing, 30_000);
+    return () => {
+      active = false;
+      window.clearInterval(interval);
+    };
+  }, [token]);
+
   if (!ready) {
     return (
       <Box minHeight="100vh" display="flex" alignItems="center" justifyContent="center">
@@ -33,7 +51,9 @@ export default function App() {
   return (
     <BrowserRouter>
       <CssBaseline />
-      <Router />
+      <ToastProvider>
+        <Router />
+      </ToastProvider>
     </BrowserRouter>
   );
 }

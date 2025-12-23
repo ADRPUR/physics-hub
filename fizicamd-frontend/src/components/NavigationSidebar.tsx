@@ -29,6 +29,7 @@ import {
 import type { ResourceCategory } from "../types/resources";
 import { useAuthStore } from "../store/authStore";
 import { AxiosError } from "axios";
+import { notify } from "../utils/notifications";
 
 type CategoryDialogState = {
   mode: "create" | "edit";
@@ -36,8 +37,6 @@ type CategoryDialogState = {
   values: {
     label: string;
     group: string;
-    sortOrder: string;
-    groupOrder: string;
   };
   error?: string | null;
 };
@@ -73,6 +72,7 @@ export default function NavigationSidebar({ editable = false }: { editable?: boo
   >([]);
   const [categoryDialog, setCategoryDialog] = useState<CategoryDialogState | null>(null);
   const [groupDialog, setGroupDialog] = useState<GroupDialogState>(null);
+  const [deleteDialog, setDeleteDialog] = useState<ResourceCategory | null>(null);
   const [savingCategory, setSavingCategory] = useState(false);
   const [savingGroup, setSavingGroup] = useState(false);
   const [savingOrder, setSavingOrder] = useState(false);
@@ -90,14 +90,15 @@ export default function NavigationSidebar({ editable = false }: { editable?: boo
 
   const handleDeleteCategory = async (category: ResourceCategory) => {
     if (!token) return;
-    if (!window.confirm(t("teacher.sidebarManager.deleteConfirm"))) {
-      return;
-    }
     try {
       await deleteResourceCategory(token, category.code);
       loadCategories();
+      notify({ message: t("teacher.sidebarManager.saveSuccess"), severity: "success" });
     } catch (err) {
-      alert(errorMessage(err, t("teacher.sidebarManager.deleteBlocked")));
+      notify({
+        message: errorMessage(err, t("teacher.sidebarManager.deleteBlocked")),
+        severity: "error",
+      });
     }
   };
 
@@ -179,8 +180,12 @@ export default function NavigationSidebar({ editable = false }: { editable?: boo
 
       await Promise.all(updates);
       loadCategories();
+      notify({ message: t("teacher.sidebarManager.saveSuccess"), severity: "success" });
     } catch (err) {
-      alert(errorMessage(err, t("teacher.sidebarManager.saveError")));
+      notify({
+        message: errorMessage(err, t("teacher.sidebarManager.saveError")),
+        severity: "error",
+      });
     } finally {
       setSavingOrder(false);
     }
@@ -246,8 +251,6 @@ export default function NavigationSidebar({ editable = false }: { editable?: boo
                       values: {
                         label: "",
                         group: group.group,
-                        sortOrder: "",
-                        groupOrder: group.order ? String(group.order) : "",
                       },
                     })
                   }
@@ -306,8 +309,6 @@ export default function NavigationSidebar({ editable = false }: { editable?: boo
                           values: {
                             label: cat.label,
                             group: cat.group,
-                            sortOrder: cat.sortOrder?.toString() ?? "",
-                            groupOrder: cat.groupOrder?.toString() ?? "",
                           },
                         });
                       }}
@@ -319,7 +320,7 @@ export default function NavigationSidebar({ editable = false }: { editable?: boo
                       color="error"
                       onClick={(e) => {
                         e.stopPropagation();
-                        void handleDeleteCategory(cat);
+                        setDeleteDialog(cat);
                       }}
                     >
                       <Delete fontSize="small" />
@@ -343,13 +344,13 @@ export default function NavigationSidebar({ editable = false }: { editable?: boo
             size="small"
             startIcon={<Add />}
             onClick={() =>
-              setCategoryDialog({
-                mode: "create",
-                values: { label: "", group: "", sortOrder: "", groupOrder: "" },
-              })
-            }
-          >
-            {t("teacher.sidebarManager.addCategory")}
+            setCategoryDialog({
+              mode: "create",
+              values: { label: "", group: "" },
+            })
+          }
+        >
+          {t("teacher.sidebarManager.addCategory")}
           </Button>
           <Button
             variant="contained"
@@ -386,11 +387,34 @@ export default function NavigationSidebar({ editable = false }: { editable?: boo
         if (!categoryDialog || !token) return;
         setSavingCategory(true);
         setCategoryDialog((prev) => (prev ? { ...prev, error: null } : prev));
+        const isEditing = categoryDialog.mode === "edit";
+        const currentGroup = categoryDialog.category?.group ?? "";
+        const nextGroup = categoryDialog.values.group.trim();
+        const targetGroup = nextGroup || currentGroup;
+        const groupOrderMap = new Map<string, number>();
+        categories.forEach((cat) => {
+          groupOrderMap.set(cat.group, cat.groupOrder ?? 0);
+        });
+        const maxGroupOrder = Math.max(0, ...Array.from(groupOrderMap.values()));
+        const nextGroupOrder = targetGroup ? (groupOrderMap.get(targetGroup) ?? maxGroupOrder + 1) : undefined;
+        const sortOrderForGroup = (groupName: string) => {
+          const groupItems = categories.filter((cat) => cat.group === groupName);
+          const maxSortOrder = Math.max(0, ...groupItems.map((cat) => cat.sortOrder ?? 0));
+          return maxSortOrder + 1;
+        };
         const payload = {
           label: categoryDialog.values.label,
-          group: categoryDialog.values.group,
-          sortOrder: parseNumber(categoryDialog.values.sortOrder),
-          groupOrder: parseNumber(categoryDialog.values.groupOrder),
+          group: targetGroup,
+          sortOrder:
+            isEditing && categoryDialog.category?.group === targetGroup
+              ? categoryDialog.category?.sortOrder
+              : targetGroup
+              ? sortOrderForGroup(targetGroup)
+              : undefined,
+          groupOrder:
+            isEditing && categoryDialog.category?.group === targetGroup
+              ? categoryDialog.category?.groupOrder
+              : nextGroupOrder,
         };
         try {
           if (categoryDialog.mode === "create") {
@@ -400,9 +424,11 @@ export default function NavigationSidebar({ editable = false }: { editable?: boo
           }
           setCategoryDialog(null);
           loadCategories();
+          notify({ message: t("teacher.sidebarManager.saveSuccess"), severity: "success" });
         } catch (err) {
           const message = errorMessage(err, t("teacher.sidebarManager.saveError"));
           setCategoryDialog((prev) => (prev ? { ...prev, error: message } : prev));
+          notify({ message, severity: "error" });
         } finally {
           setSavingCategory(false);
         }
@@ -428,15 +454,39 @@ export default function NavigationSidebar({ editable = false }: { editable?: boo
           });
           setGroupDialog(null);
           loadCategories();
+          notify({ message: t("teacher.sidebarManager.saveSuccess"), severity: "success" });
         } catch (err) {
           const message = errorMessage(err, t("teacher.sidebarManager.saveError"));
           setGroupDialog((prev) => (prev ? { ...prev, error: message } : prev));
+          notify({ message, severity: "error" });
         } finally {
           setSavingGroup(false);
         }
       }}
       t={t}
     />
+    <Dialog open={!!deleteDialog} onClose={() => setDeleteDialog(null)}>
+      <DialogTitle>{t("common.actions.delete")}</DialogTitle>
+      <DialogContent>
+        {t("teacher.sidebarManager.deleteConfirm")} <strong>{deleteDialog?.label}</strong>
+      </DialogContent>
+      <DialogActions>
+        <Button onClick={() => setDeleteDialog(null)}>
+          {t("common.actions.cancel")}
+        </Button>
+        <Button
+          color="error"
+          variant="contained"
+          onClick={() => {
+            if (!deleteDialog) return;
+            void handleDeleteCategory(deleteDialog);
+            setDeleteDialog(null);
+          }}
+        >
+          {t("common.actions.delete")}
+        </Button>
+      </DialogActions>
+    </Dialog>
   </CardContent>
 </Card>
 );
@@ -476,20 +526,6 @@ function CategoryDialog({ open, dialog, saving, onClose, onChange, onSubmit, t }
             onChange={(e) => onChange("group", e.target.value)}
             fullWidth
           />
-          <TextField
-            label={t("teacher.sidebarManager.fields.groupOrder")}
-            type="number"
-            value={dialog.values.groupOrder}
-            onChange={(e) => onChange("groupOrder", e.target.value)}
-            fullWidth
-          />
-          <TextField
-            label={t("teacher.sidebarManager.fields.sortOrder")}
-            type="number"
-            value={dialog.values.sortOrder}
-            onChange={(e) => onChange("sortOrder", e.target.value)}
-            fullWidth
-          />
         </Stack>
       </DialogContent>
       <DialogActions>
@@ -509,7 +545,7 @@ type GroupDialogProps = {
   dialog: GroupDialogState;
   saving: boolean;
   onClose: () => void;
-  onChange: (field: "label" | "groupOrder", value: string) => void;
+  onChange: (field: "label", value: string) => void;
   onSubmit: () => void;
   t: ReturnType<typeof useI18n>["t"];
 };
@@ -526,13 +562,6 @@ function GroupDialog({ open, dialog, saving, onClose, onChange, onSubmit, t }: G
             label={t("teacher.sidebarManager.fields.group")}
             value={dialog.label}
             onChange={(e) => onChange("label", e.target.value)}
-            fullWidth
-          />
-          <TextField
-            label={t("teacher.sidebarManager.fields.groupOrder")}
-            type="number"
-            value={dialog.groupOrder}
-            onChange={(e) => onChange("groupOrder", e.target.value)}
             fullWidth
           />
         </Stack>

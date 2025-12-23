@@ -32,6 +32,9 @@ public class User {
   @Column(name = "last_login_at")
   private Instant lastLoginAt;
 
+  @Column(name = "last_seen_at")
+  private Instant lastSeenAt;
+
   @Column(name = "is_email_verified", nullable = false)
   private boolean emailVerified = false;
 
@@ -60,6 +63,8 @@ public class User {
   public Instant getUpdatedAt() { return updatedAt; }
   public Instant getLastLoginAt() { return lastLoginAt; }
   public void setLastLoginAt(Instant t) { this.lastLoginAt = t; }
+  public Instant getLastSeenAt() { return lastSeenAt; }
+  public void setLastSeenAt(Instant t) { this.lastSeenAt = t; }
   public boolean isEmailVerified() { return emailVerified; }
   public Instant getDeletedAt() { return deletedAt; }
 

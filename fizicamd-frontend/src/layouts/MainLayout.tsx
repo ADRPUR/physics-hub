@@ -46,7 +46,7 @@ function AvatarMenu() {
 
   const menuItems = [
     { label: t("layout.home"), to: "/" },
-    { label: t("layout.overview"), to: "/overview" },
+    ...(user.role === "ADMIN" ? [{ label: t("layout.overview"), to: "/overview" }] : []),
     { label: t("layout.profile"), to: "/profile" },
     ...(user.role === "TEACHER" || user.role === "ADMIN"
       ? [{ label: t("layout.studio"), to: "/teacher/studio" }]
@@ -217,7 +217,7 @@ export default function MainLayout() {
               {visitCount !== null ? visitCount.toLocaleString() : "—"}
             </Typography>
             <Typography variant="body2" color="text.secondary">
-              Dedicat tuturor pasionatilor de fizica, creat cu suflet de{" "}
+              {t("footer.dedication")}{" "}
               <Link
                 href="https://www.linkedin.com/in/adrian-purice-18047584"
                 target="_blank"

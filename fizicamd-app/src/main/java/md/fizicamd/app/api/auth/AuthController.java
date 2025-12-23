@@ -21,7 +21,7 @@ import static md.fizicamd.app.api.auth.AuthDtos.*;
 @RestController
 @RequestMapping("/api/auth")
 public class AuthController {
-  private static final long ACCESS_TTL_SECONDS = 900L;
+  private static final long ACCESS_TTL_SECONDS = 14_400L;
   private static final long REFRESH_TTL_SECONDS = 1_209_600L; // 14 days
 
   private final IdentityService identityService;
@@ -81,6 +81,7 @@ public class AuthController {
     var refresh = jwtService.createRefreshToken(user.getId(), REFRESH_TTL_SECONDS); // 14 days
     var now = Instant.now();
     user.setLastLoginAt(now);
+    user.setLastSeenAt(now);
     userRepository.save(user);
 
     return new TokenResponse(access, refresh, now.plusSeconds(ACCESS_TTL_SECONDS).getEpochSecond(), UserMapper.toDto(user, profile));

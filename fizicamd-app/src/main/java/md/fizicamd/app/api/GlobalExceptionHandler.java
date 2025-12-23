@@ -4,10 +4,12 @@ import md.fizicamd.app.api.auth.AuthException;
 import md.fizicamd.shared.NotFoundException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.web.context.request.async.AsyncRequestNotUsableException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import jakarta.servlet.http.HttpServletRequest;
+import org.apache.catalina.connector.ClientAbortException;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -29,6 +31,11 @@ public class GlobalExceptionHandler {
   public ResponseEntity<ApiError> authError(AuthException ex, HttpServletRequest request) {
     log.info("Auth failure: {} {} -> {}", request.getMethod(), request.getRequestURI(), ex.getMessage());
     return ResponseEntity.status(ex.getStatus()).body(new ApiError(ex.getMessage()));
+  }
+
+  @ExceptionHandler({ClientAbortException.class, AsyncRequestNotUsableException.class})
+  public void clientAbort(Exception ex, HttpServletRequest request) {
+    log.debug("Client aborted: {} {} -> {}", request.getMethod(), request.getRequestURI(), ex.getMessage());
   }
 
   @ExceptionHandler(Exception.class)

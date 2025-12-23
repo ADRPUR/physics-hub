@@ -67,7 +67,7 @@ export default function RegisterPage() {
       navigate("/overview", { replace: true });
     } catch (err: unknown) {
       if (axios.isAxiosError(err)) {
-        setError(err.response?.data?.error || t("authErrors.registrationFailed"));
+        setError(err.response?.data?.message || err.response?.data?.error || t("authErrors.registrationFailed"));
       } else {
         setError(t("authErrors.unknown"));
       }

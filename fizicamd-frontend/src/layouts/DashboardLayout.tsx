@@ -43,7 +43,9 @@ export default function DashboardLayout() {
   const [visitCount, setVisitCount] = useState<number | null>(null);
 
   const menuItems = [
-    { key: "overview", label: t("layout.overview"), icon: <Dashboard />, to: "/overview" },
+    ...(user?.role === "ADMIN"
+      ? [{ key: "overview", label: t("layout.overview"), icon: <Dashboard />, to: "/overview" }]
+      : []),
     { key: "profile", label: t("layout.profile"), icon: <Person />, to: "/profile" },
     ...(user && (user.role === "TEACHER" || user.role === "ADMIN")
       ? [{ key: "studio", label: t("layout.studio"), icon: <MenuBook />, to: "/teacher/studio" }]
@@ -195,13 +197,13 @@ export default function DashboardLayout() {
                 Physics Hub • {currentYear} • {t("footer.visitors")}{" "}
                 {visitCount !== null ? visitCount.toLocaleString() : "—"}
               </Typography>
-              <Typography variant="body2" color="text.secondary">
-                Dedicat tuturor pasionatilor de fizica, creat cu suflet de{" "}
-                <Link
-                  href="https://www.linkedin.com/in/adrian-purice-18047584"
-                  target="_blank"
-                  rel="noreferrer"
-                  underline="hover"
+            <Typography variant="body2" color="text.secondary">
+              {t("footer.dedication")}{" "}
+              <Link
+                href="https://www.linkedin.com/in/adrian-purice-18047584"
+                target="_blank"
+                rel="noreferrer"
+                underline="hover"
                 >
                   Adrian Purice
                 </Link>

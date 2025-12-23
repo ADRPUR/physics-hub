@@ -13,6 +13,7 @@ export interface UserListItem {
   school?: string;
   createdAt?: string;
   lastLoginAt?: string;
+  lastSeenAt?: string;
 }
 
 export interface UserUpsertPayload {
@@ -25,4 +26,16 @@ export interface UserUpsertPayload {
   school?: string;
   gradeLevel?: string;
   status?: "ACTIVE" | "PENDING" | "DISABLED";
+}
+
+export interface ServerMetricSample {
+  capturedAt: string;
+  heapUsedBytes: number;
+  heapMaxBytes: number;
+  systemMemoryTotalBytes: number;
+  systemMemoryUsedBytes: number;
+  diskTotalBytes: number;
+  diskUsedBytes: number;
+  processCpuLoad?: number | null;
+  systemCpuLoad?: number | null;
 }

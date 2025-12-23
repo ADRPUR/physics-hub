@@ -9,10 +9,12 @@ import org.springframework.context.event.EventListener;
 import org.springframework.core.env.Environment;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
+import org.springframework.scheduling.annotation.EnableScheduling;
 
 @SpringBootApplication(scanBasePackages = "md.fizicamd")
 @EntityScan(basePackages = "md.fizicamd")
 @EnableJpaRepositories(basePackages = "md.fizicamd")
+@EnableScheduling
 public class FizicaMdApplication {
   private static final Logger log = LoggerFactory.getLogger(FizicaMdApplication.class);
   private final Environment environment;

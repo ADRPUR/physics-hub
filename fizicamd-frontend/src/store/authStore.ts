@@ -17,21 +17,36 @@ export const useAuthStore = create<AuthState>((set) => ({
   refreshToken: null,
   login: (user, token, refreshToken) => {
     set({ user, token, refreshToken });
-    localStorage.setItem("user", JSON.stringify(user));
-    localStorage.setItem("token", token);
-    localStorage.setItem("refreshToken", refreshToken);
+    sessionStorage.setItem("user", JSON.stringify(user));
+    sessionStorage.setItem("token", token);
+    sessionStorage.setItem("refreshToken", refreshToken);
   },
   logout: () => {
     set({ user: null, token: null, refreshToken: null });
+    sessionStorage.removeItem("user");
+    sessionStorage.removeItem("token");
+    sessionStorage.removeItem("refreshToken");
     localStorage.removeItem("user");
     localStorage.removeItem("token");
     localStorage.removeItem("refreshToken");
   },
   init: () => {
     try {
-      const token = localStorage.getItem("token");
-      const refreshToken = localStorage.getItem("refreshToken");
-      const userStr = localStorage.getItem("user");
+      const token = sessionStorage.getItem("token") ?? localStorage.getItem("token");
+      const refreshToken = sessionStorage.getItem("refreshToken") ?? localStorage.getItem("refreshToken");
+      const userStr = sessionStorage.getItem("user") ?? localStorage.getItem("user");
+      if (token && localStorage.getItem("token")) {
+        sessionStorage.setItem("token", token);
+        localStorage.removeItem("token");
+      }
+      if (refreshToken && localStorage.getItem("refreshToken")) {
+        sessionStorage.setItem("refreshToken", refreshToken);
+        localStorage.removeItem("refreshToken");
+      }
+      if (userStr && localStorage.getItem("user")) {
+        sessionStorage.setItem("user", userStr);
+        localStorage.removeItem("user");
+      }
       set({
         user: userStr ? (JSON.parse(userStr) as User) : null,
         token: token ?? null,
@@ -44,7 +59,7 @@ export const useAuthStore = create<AuthState>((set) => ({
   updateUser: (user) => {
     set((state) => {
       const next = { ...state, user };
-      localStorage.setItem("user", JSON.stringify(user));
+      sessionStorage.setItem("user", JSON.stringify(user));
       return next;
     });
   },

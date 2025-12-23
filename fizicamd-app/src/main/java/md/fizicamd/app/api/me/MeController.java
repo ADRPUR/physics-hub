@@ -83,6 +83,16 @@ public class MeController {
     return ResponseEntity.noContent().build();
   }
 
+  @PostMapping("/ping")
+  public ResponseEntity<Void> ping(Authentication auth) {
+    var user = userRepository
+      .findById(currentUserId(auth))
+      .orElseThrow(() -> new NotFoundException("User not found"));
+    user.setLastSeenAt(java.time.Instant.now());
+    userRepository.save(user);
+    return ResponseEntity.noContent().build();
+  }
+
   private static UUID currentUserId(Authentication auth) {
     var id = auth != null ? auth.getDetails() : null;
     if (id instanceof UUID uuid) {

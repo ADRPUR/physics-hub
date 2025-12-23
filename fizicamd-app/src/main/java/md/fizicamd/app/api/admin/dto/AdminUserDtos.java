@@ -26,7 +26,8 @@ public class AdminUserDtos {
           String school,
           String gradeLevel,
           Instant createdAt,
-          Instant lastLoginAt
+          Instant lastLoginAt,
+          Instant lastSeenAt
   ) {
     public static AdminUserResponse from(User user, UserProfile profile) {
       var roles = user.getRoles().stream()
@@ -45,7 +46,8 @@ public class AdminUserDtos {
               profile != null ? profile.getSchool() : null,
               profile != null ? profile.getGradeLevel() : null,
               user.getCreatedAt(),
-              user.getLastLoginAt()
+              user.getLastLoginAt(),
+              user.getLastSeenAt()
       );
     }
   }
