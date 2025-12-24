@@ -3,7 +3,7 @@ FROM eclipse-temurin:21-jdk AS build
 WORKDIR /workspace
 
 COPY . .
-RUN ./gradlew :fizicamd-app:bootJar -x test --no-daemon
+RUN ./gradlew :fizicamd-app:bootJar --no-daemon
 
 FROM eclipse-temurin:21-jre
 
