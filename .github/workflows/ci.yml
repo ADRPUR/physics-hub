@@ -2,22 +2,25 @@ name: CI
 
 on:
   push:
-    branches: ["**"]
+    branches: [main, master]
   pull_request:
+    branches: [main, master]
 
 jobs:
-  backend-tests:
+  test-build:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Set up JDK 21
+      - name: Set up Java
         uses: actions/setup-java@v4
         with:
-          distribution: "temurin"
+          distribution: temurin
           java-version: "21"
-          cache: "gradle"
+          cache: gradle
 
-      - name: Run backend tests
-        run: ./gradlew :fizicamd-app:test
+      - name: Run tests
+        run: ./gradlew test --no-daemon
+
+      - name: Build
+        run: ./gradlew build --no-daemon
