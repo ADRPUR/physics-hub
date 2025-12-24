@@ -11,8 +11,8 @@ public class JwtConfig {
 
   @Bean
   public JwtService jwtService(
-    @Value("${security.jwt.secret}") String secret,
-    @Value("${security.jwt.issuer}") String issuer
+    @Value("${security.jwt.secret:CHANGE_ME_CHANGE_ME_CHANGE_ME_CHANGE_ME_1234}") String secret,
+    @Value("${security.jwt.issuer:fizicamd}") String issuer
   ) {
     return new JwtService(secret.getBytes(StandardCharsets.UTF_8), issuer);
   }
