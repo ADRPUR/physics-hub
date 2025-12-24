@@ -22,7 +22,14 @@ bin/
 # Local environment / config
 *.env
 .env.*
-storage/
+storage/*
+!storage/.gitignore
+!storage/media/
+!storage/media/.gitignore
+!storage/media/users/
+!storage/media/users/.gitignore
+!storage/media/resources/
+!storage/media/resources/.gitignore
 
 # Node / frontend artifacts
 fizicamd-frontend/node_modules/
