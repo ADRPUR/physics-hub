@@ -1,10 +1,10 @@
 import { Fragment, useEffect, useMemo, useState } from "react";
-import { Box, CircularProgress, ListSubheader, MenuItem, TextField, Typography } from "@mui/material";
+import { Box, CircularProgress, ListSubheader, MenuItem, Pagination, Stack, TextField, Typography } from "@mui/material";
 import { useSearchParams } from "react-router-dom";
 import PageLayout from "../components/PageLayout";
 import { useI18n } from "../i18n";
 import type { ResourceCard, ResourceCategory } from "../types/resources";
-import { fetchPublicResources, fetchResourceCategories } from "../api/resources";
+import { fetchPublicResourcesPage, fetchResourceCategories } from "../api/resources";
 import ResourceCardComponent from "../components/resources/ResourceCard";
 
 export default function ResourcesPage() {
@@ -13,8 +13,21 @@ export default function ResourcesPage() {
   const [categories, setCategories] = useState<ResourceCategory[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchParams, setSearchParams] = useSearchParams();
+  const [categoryFilter, setCategoryFilter] = useState(() => searchParams.get("category") ?? "");
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [page, setPage] = useState(() => {
+    const value = Number(searchParams.get("page"));
+    return Number.isFinite(value) && value > 0 ? value : 1;
+  });
+  const [totalResources, setTotalResources] = useState(0);
+  const pageSize = 5;
 
-  const selectedCategory = searchParams.get("category") ?? "";
+  useEffect(() => {
+    const nextCategory = searchParams.get("category") ?? "";
+    setCategoryFilter(nextCategory);
+    const nextPage = Number(searchParams.get("page"));
+    setPage(Number.isFinite(nextPage) && nextPage > 0 ? nextPage : 1);
+  }, [searchParams]);
 
   useEffect(() => {
     fetchResourceCategories()
@@ -26,17 +39,19 @@ export default function ResourcesPage() {
     const load = async () => {
       setLoading(true);
       try {
-        const items = await fetchPublicResources({
-          category: selectedCategory || undefined,
-          limit: 24,
+        const data = await fetchPublicResourcesPage({
+          category: categoryFilter || undefined,
+          limit: pageSize,
+          page,
         });
-        setResources(items);
+        setResources(data.items);
+        setTotalResources(data.total);
       } finally {
         setLoading(false);
       }
     };
     load();
-  }, [selectedCategory]);
+  }, [categoryFilter, page]);
 
   const groupedCategories = useMemo(() => {
     const map = new Map<string, { order: number; items: ResourceCategory[] }>();
@@ -49,6 +64,29 @@ export default function ResourcesPage() {
     return Array.from(map.entries()).sort((a, b) => a[1].order - b[1].order);
   }, [categories]);
 
+  const menuItems = useMemo(() => {
+    const items: React.ReactNode[] = [
+      <MenuItem key="all" value="" onClick={() => setMenuOpen(false)}>
+        {t("resources.allCategories")}
+      </MenuItem>,
+    ];
+    groupedCategories.forEach(([group, data]) => {
+      items.push(
+        <ListSubheader key={`group-${group}`} disableSticky>
+          {group}
+        </ListSubheader>
+      );
+      data.items.forEach((cat) => {
+        items.push(
+          <MenuItem key={cat.code} value={cat.code} onClick={() => setMenuOpen(false)}>
+            {cat.label}
+          </MenuItem>
+        );
+      });
+    });
+    return items;
+  }, [groupedCategories, t]);
+
   return (
     <PageLayout>
       <Box>
@@ -58,7 +96,7 @@ export default function ResourcesPage() {
         <TextField
           select
           label={t("resources.categoryFilter")}
-          value={selectedCategory}
+          value={categoryFilter}
           onChange={(e) => {
             const value = e.target.value;
             const next = new URLSearchParams(searchParams);
@@ -67,39 +105,55 @@ export default function ResourcesPage() {
             } else {
               next.delete("category");
             }
+            next.delete("page");
+            setCategoryFilter(value);
+            setPage(1);
             setSearchParams(next);
+          }}
+          SelectProps={{
+            open: menuOpen,
+            onOpen: () => setMenuOpen(true),
+            onClose: () => setMenuOpen(false),
+            MenuProps: {
+              onClick: () => setMenuOpen(false),
+            },
           }}
           sx={{ mb: 3, minWidth: 240 }}
         >
-          <MenuItem value="">{t("resources.allCategories")}</MenuItem>
-          {groupedCategories.map(([group, data]) => (
-            <Fragment key={group}>
-              <ListSubheader>{group}</ListSubheader>
-              {data.items.map((cat) => (
-                <MenuItem key={cat.code} value={cat.code}>
-                  {cat.label}
-                </MenuItem>
-              ))}
-            </Fragment>
-          ))}
+          {menuItems}
         </TextField>
 
-        {loading ? (
-          <CircularProgress />
-        ) : (
-          <>
-            <Box display="grid" gap={3} gridTemplateColumns="1fr">
-              {resources.map((res) => (
-                <ResourceCardComponent key={res.id} resource={res} />
-              ))}
-            </Box>
-            {!resources.length && (
-              <Typography color="text.secondary" mt={2}>
-                {t("resources.empty")}
-              </Typography>
-            )}
-          </>
-        )}
+          {loading ? (
+            <CircularProgress />
+          ) : (
+            <>
+              <Box display="grid" gap={3} gridTemplateColumns="1fr">
+                {resources.map((res) => (
+                  <ResourceCardComponent key={res.id} resource={res} />
+                ))}
+              </Box>
+              {!resources.length && (
+                <Typography color="text.secondary" mt={2}>
+                  {t("resources.empty")}
+                </Typography>
+              )}
+              {totalResources > pageSize && (
+                <Stack alignItems="center" mt={3}>
+                  <Pagination
+                    count={Math.ceil(totalResources / pageSize)}
+                    page={page}
+                    onChange={(_, value) => {
+                      const next = new URLSearchParams(searchParams);
+                      next.set("page", String(value));
+                      setPage(value);
+                      setSearchParams(next);
+                    }}
+                    color="primary"
+                  />
+                </Stack>
+              )}
+            </>
+          )}
       </Box>
     </PageLayout>
   );

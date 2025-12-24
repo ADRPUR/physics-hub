@@ -19,7 +19,7 @@ import {
 import { useAuthStore } from "../store/authStore";
 import { useEffect, useMemo, useRef, useState } from "react";
 import dayjs from "dayjs";
-import { deleteMyAccount, fetchProfile, updateProfile, uploadAvatar } from "../api/user";
+import { changePassword, deleteMyAccount, fetchProfile, updateProfile, uploadAvatar } from "../api/user";
 import type { ProfileUpdateRequest } from "../types/user";
 import { API_URL } from "../api/http";
 import Cropper from "react-easy-crop";
@@ -52,6 +52,12 @@ export default function ProfilePage() {
   const [zoom, setZoom] = useState(1.1);
   const [croppedAreaPixels, setCroppedAreaPixels] = useState<Area | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [passwordForm, setPasswordForm] = useState({
+    currentPassword: "",
+    newPassword: "",
+    confirmPassword: "",
+  });
+  const [savingPassword, setSavingPassword] = useState(false);
 
   const canDeleteSelf = user && user.role !== "ADMIN";
 
@@ -174,6 +180,38 @@ export default function ProfilePage() {
     }
   };
 
+  const handlePasswordChange =
+    (field: keyof typeof passwordForm) => (e: React.ChangeEvent<HTMLInputElement>) => {
+      setPasswordForm((prev) => ({ ...prev, [field]: e.target.value }));
+    };
+
+  const handleChangePassword = async () => {
+    if (!token) return;
+    if (passwordForm.newPassword !== passwordForm.confirmPassword) {
+      notify({ message: t("profile.passwordMismatch"), severity: "error" });
+      return;
+    }
+    setSavingPassword(true);
+    try {
+      await changePassword(token, passwordForm);
+      notify({ message: t("profile.passwordUpdated"), severity: "success" });
+      setPasswordForm({ currentPassword: "", newPassword: "", confirmPassword: "" });
+    } catch (err: any) {
+      const message = err?.response?.data?.message;
+      notify({
+        message:
+          message === "Password confirmation does not match"
+            ? t("profile.passwordMismatch")
+            : message === "Authentication failed"
+            ? t("profile.currentPasswordInvalid")
+            : message || t("profile.passwordUpdateError"),
+        severity: "error",
+      });
+    } finally {
+      setSavingPassword(false);
+    }
+  };
+
   const avatarSrc = useMemo(() => {
     if (!user?.profile?.avatarUrl) return undefined;
     return `${API_URL}${user.profile.avatarUrl}?t=${Date.now()}`;
@@ -242,96 +280,142 @@ export default function ProfilePage() {
           </Card>
         </Stack>
 
-        <Card>
-          <CardHeader
-            title={t("profile.personalDataTitle")}
-            subheader={t("profile.personalDataSubtitle")}
-          />
-          <CardContent>
-            <Box
-              display="grid"
-              gap={2}
-              gridTemplateColumns={{ xs: "1fr", md: "repeat(2, minmax(0, 1fr))" }}
-            >
-              <TextField
-                label={t("profile.labels.firstName")}
-                value={form.firstName}
-                onChange={handleChange("firstName")}
-                fullWidth
-                disabled={loading}
-              />
-              <TextField
-                label={t("profile.labels.lastName")}
-                value={form.lastName}
-                onChange={handleChange("lastName")}
-                fullWidth
-                disabled={loading}
-              />
-              <TextField
-                label={t("profile.labels.birthDate")}
-                type="date"
-                value={form.birthDate ?? ""}
-                onChange={handleChange("birthDate")}
-                fullWidth
-                InputLabelProps={{ shrink: true }}
-                disabled={loading}
-              />
-              <TextField
-                label={t("profile.labels.phone")}
-                value={form.phone}
-                onChange={handleChange("phone")}
-                fullWidth
-                disabled={loading}
-              />
-              <TextField
-                label={t("profile.labels.school")}
-                value={form.school}
-                onChange={handleChange("school")}
-                fullWidth
-                disabled={loading}
-              />
-              <TextField
-                label={t("profile.labels.grade")}
-                value={form.gradeLevel}
-                onChange={handleChange("gradeLevel")}
-                fullWidth
-                disabled={loading}
-              />
-              <TextField
-                select
-                label={t("profile.labels.gender")}
-                value={form.gender ?? ""}
-                onChange={handleChange("gender")}
-                fullWidth
-                disabled={loading}
+        <Stack spacing={3}>
+          <Card>
+            <CardHeader
+              title={t("profile.personalDataTitle")}
+              subheader={t("profile.personalDataSubtitle")}
+            />
+            <CardContent>
+              <Box
+                display="grid"
+                gap={2}
+                gridTemplateColumns={{ xs: "1fr", md: "repeat(2, minmax(0, 1fr))" }}
               >
-                <MenuItem value="">{t("profile.gender.unspecified")}</MenuItem>
-                <MenuItem value="FEMALE">{t("profile.gender.female")}</MenuItem>
-                <MenuItem value="MALE">{t("profile.gender.male")}</MenuItem>
-                <MenuItem value="OTHER">{t("profile.gender.other")}</MenuItem>
-              </TextField>
-              <Box sx={{ gridColumn: "1 / -1" }}>
                 <TextField
-                  label={t("profile.labels.bio")}
-                  multiline
-                  minRows={3}
-                  value={form.bio}
-                  onChange={handleChange("bio")}
+                  label={t("profile.labels.firstName")}
+                  value={form.firstName}
+                  onChange={handleChange("firstName")}
                   fullWidth
                   disabled={loading}
                 />
+                <TextField
+                  label={t("profile.labels.lastName")}
+                  value={form.lastName}
+                  onChange={handleChange("lastName")}
+                  fullWidth
+                  disabled={loading}
+                />
+                <TextField
+                  label={t("profile.labels.birthDate")}
+                  type="date"
+                  value={form.birthDate ?? ""}
+                  onChange={handleChange("birthDate")}
+                  fullWidth
+                  InputLabelProps={{ shrink: true }}
+                  disabled={loading}
+                />
+                <TextField
+                  label={t("profile.labels.phone")}
+                  value={form.phone}
+                  onChange={handleChange("phone")}
+                  fullWidth
+                  disabled={loading}
+                />
+                <TextField
+                  label={t("profile.labels.school")}
+                  value={form.school}
+                  onChange={handleChange("school")}
+                  fullWidth
+                  disabled={loading}
+                />
+                <TextField
+                  label={t("profile.labels.grade")}
+                  value={form.gradeLevel}
+                  onChange={handleChange("gradeLevel")}
+                  fullWidth
+                  disabled={loading}
+                />
+                <TextField
+                  select
+                  label={t("profile.labels.gender")}
+                  value={form.gender ?? ""}
+                  onChange={handleChange("gender")}
+                  fullWidth
+                  disabled={loading}
+                >
+                  <MenuItem value="">{t("profile.gender.unspecified")}</MenuItem>
+                  <MenuItem value="FEMALE">{t("profile.gender.female")}</MenuItem>
+                  <MenuItem value="MALE">{t("profile.gender.male")}</MenuItem>
+                  <MenuItem value="OTHER">{t("profile.gender.other")}</MenuItem>
+                </TextField>
+                <Box sx={{ gridColumn: "1 / -1" }}>
+                  <TextField
+                    label={t("profile.labels.bio")}
+                    multiline
+                    minRows={3}
+                    value={form.bio}
+                    onChange={handleChange("bio")}
+                    fullWidth
+                    disabled={loading}
+                  />
+                </Box>
               </Box>
-            </Box>
-          </CardContent>
-          <Divider />
-          <CardContent>
-            <Stack direction="row" spacing={2} justifyContent="flex-end">
-              <Button variant="contained" onClick={handleSave} disabled={saving || loading}>
-                {t("common.actions.save")}
-              </Button>
-            </Stack>
-          </CardContent>
-        </Card>
+            </CardContent>
+            <Divider />
+            <CardContent>
+              <Stack direction="row" spacing={2} justifyContent="flex-end">
+                <Button variant="contained" onClick={handleSave} disabled={saving || loading}>
+                  {t("common.actions.save")}
+                </Button>
+              </Stack>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader
+              title={t("profile.changePasswordTitle")}
+              subheader={t("profile.changePasswordSubtitle")}
+            />
+            <CardContent>
+              <Stack spacing={2}>
+                <TextField
+                  label={t("profile.labels.currentPassword")}
+                  type="password"
+                  value={passwordForm.currentPassword}
+                  onChange={handlePasswordChange("currentPassword")}
+                  fullWidth
+                />
+                <TextField
+                  label={t("profile.labels.newPassword")}
+                  type="password"
+                  value={passwordForm.newPassword}
+                  onChange={handlePasswordChange("newPassword")}
+                  fullWidth
+                />
+                <TextField
+                  label={t("profile.labels.confirmPassword")}
+                  type="password"
+                  value={passwordForm.confirmPassword}
+                  onChange={handlePasswordChange("confirmPassword")}
+                  fullWidth
+                />
+              </Stack>
+            </CardContent>
+            <Divider />
+            <CardContent>
+              <Stack direction="row" spacing={2} justifyContent="flex-end">
+                <Button
+                  variant="contained"
+                  onClick={handleChangePassword}
+                  disabled={savingPassword}
+                >
+                  {t("profile.changePasswordAction")}
+                </Button>
+              </Stack>
+            </CardContent>
+          </Card>
+        </Stack>
       </Box>
       <Dialog open={cropDialogOpen} onClose={resetCropState} maxWidth="sm" fullWidth keepMounted>
         <DialogTitle>{t("profile.avatarDialogTitle")}</DialogTitle>

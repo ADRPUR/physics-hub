@@ -2,8 +2,10 @@ package md.fizicamd.app.api.me;
 
 import jakarta.validation.Valid;
 import md.fizicamd.app.api.shared.UserMapper;
+import md.fizicamd.app.api.auth.AuthException;
 import md.fizicamd.app.media.MediaService;
 import md.fizicamd.identity.application.IdentityService;
+import md.fizicamd.identity.application.PasswordHasher;
 import md.fizicamd.identity.application.UserProfileRepository;
 import md.fizicamd.identity.application.UserRepository;
 import md.fizicamd.identity.domain.Profile.UserProfile;
@@ -17,6 +19,7 @@ import java.util.UUID;
 
 import static md.fizicamd.app.api.me.ProfileDtos.ProfileResponse;
 import static md.fizicamd.app.api.me.ProfileDtos.ProfileUpdateRequest;
+import static md.fizicamd.app.api.me.ProfileDtos.ChangePasswordRequest;
 
 @RestController
 @RequestMapping("/api/me")
@@ -25,17 +28,20 @@ public class MeController {
   private final UserProfileRepository profileRepository;
   private final IdentityService identityService;
   private final MediaService mediaService;
+  private final PasswordHasher passwordHasher;
 
   public MeController(
           UserRepository userRepository,
           UserProfileRepository profileRepository,
           IdentityService identityService,
-          MediaService mediaService
+          MediaService mediaService,
+          PasswordHasher passwordHasher
   ) {
     this.userRepository = userRepository;
     this.profileRepository = profileRepository;
     this.identityService = identityService;
     this.mediaService = mediaService;
+    this.passwordHasher = passwordHasher;
   }
 
   @GetMapping
@@ -80,6 +86,22 @@ public class MeController {
       mediaService.deleteAsset(profile.getAvatarMediaId());
     }
     identityService.deleteUser(userId);
+    return ResponseEntity.noContent().build();
+  }
+
+  @PutMapping("/password")
+  public ResponseEntity<Void> changePassword(@Valid @RequestBody ChangePasswordRequest req, Authentication auth) {
+    if (!req.newPassword().equals(req.confirmPassword())) {
+      throw new IllegalArgumentException("Password confirmation does not match");
+    }
+    var user = userRepository
+      .findById(currentUserId(auth))
+      .orElseThrow(() -> new NotFoundException("User not found"));
+    if (!passwordHasher.matches(req.currentPassword(), user.getPasswordHash())) {
+      throw AuthException.invalidCredentials();
+    }
+    user.setPasswordHash(passwordHasher.hash(req.newPassword()));
+    userRepository.save(user);
     return ResponseEntity.noContent().build();
   }
 

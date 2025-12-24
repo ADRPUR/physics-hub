@@ -1,5 +1,6 @@
 package md.fizicamd.app.api.me;
 
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import md.fizicamd.app.api.shared.UserRepresentation;
 
@@ -16,5 +17,11 @@ public class ProfileDtos {
           @Size(max = 255) String school,
           @Size(max = 32) String gradeLevel,
           @Size(max = 1024) String bio
+  ) {}
+
+  public record ChangePasswordRequest(
+          @NotBlank @Size(min = 8, max = 128) String currentPassword,
+          @NotBlank @Size(min = 8, max = 128) String newPassword,
+          @NotBlank @Size(min = 8, max = 128) String confirmPassword
   ) {}
 }

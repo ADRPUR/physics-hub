@@ -36,6 +36,13 @@ export async function pingMe(token: string) {
   await http.post("/me/ping", {}, { headers: authHeaders(token) });
 }
 
+export async function changePassword(
+  token: string,
+  payload: { currentPassword: string; newPassword: string; confirmPassword: string }
+) {
+  await http.put("/me/password", payload, { headers: authHeaders(token) });
+}
+
 export async function uploadAvatar(token: string, file: File) {
   const form = new FormData();
   form.append("file", file);
